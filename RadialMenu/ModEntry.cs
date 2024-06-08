@@ -46,6 +46,14 @@ namespace RadialMenu
             {
                 return;
             }
+            if (cursor.WasMenuChanged && cursor.ActiveMenu != null)
+            {
+                Game1.playSound("shwip");
+            }
+            else if (cursor.WasTargetChanged && cursor.CurrentTarget != null)
+            {
+                Game1.playSound("smallSelect");
+            }
         }
 
         private void GameLoop_UpdateTicking(object? sender, UpdateTickingEventArgs e)

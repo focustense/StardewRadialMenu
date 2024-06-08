@@ -20,6 +20,7 @@ namespace RadialMenu
         public MenuKind? ActiveMenu { get; private set; }
         public MenuCursorTarget? CurrentTarget { get; private set; }
         public bool WasMenuChanged { get; private set; }
+        public bool WasTargetChanged { get; private set; }
 
         public void UpdateActiveMenu()
         {
@@ -54,7 +55,9 @@ namespace RadialMenu
 
         public void UpdateCurrentTarget(int itemCount)
         {
+            var previousTarget = CurrentTarget;
             CurrentTarget = ComputeCurrentTarget(itemCount);
+            WasTargetChanged = CurrentTarget?.SelectedIndex != previousTarget?.SelectedIndex;
         }
 
         private MenuCursorTarget? ComputeCurrentTarget(int itemCount)
