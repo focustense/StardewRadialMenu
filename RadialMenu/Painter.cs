@@ -6,12 +6,6 @@ using TileRectangle = xTile.Dimensions.Rectangle;
 
 namespace RadialMenu
 {
-    internal record MenuItem(
-        string Title,
-        string Description,
-        Texture2D Texture,
-        Rectangle? SourceRectangle);
-
     internal class Painter
     {
         private record SelectionState(int ItemCount, int SelectedIndex);
