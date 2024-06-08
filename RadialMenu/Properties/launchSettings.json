@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "RadialMenu": {
+      "commandName": "Project"
+    },
+    "SMAPI": {
+      "commandName": "Executable",
+      "executablePath": "D:\\Games\\GOG\\Stardew Valley\\StardewModdingAPI.exe"
+    }
+  }
+}

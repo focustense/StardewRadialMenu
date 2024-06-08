@@ -1,0 +1,10 @@
+{
+  "Name": "RadialMenu",
+  "Author": "focustense",
+  "Version": "1.0.0",
+  "Description": "Radial menu for streamlined controller play",
+  "UniqueID": "focustense.RadialMenu",
+  "EntryDll": "RadialMenu.dll",
+  "MinimumApiVersion": "4.0.5",
+  "UpdateKeys": []
+}
