@@ -7,8 +7,6 @@ namespace RadialMenu
 
     internal enum MenuKind { Inventory, Custom };
 
-    internal enum ThumbStickPreference { AlwaysLeft, AlwaysRight, SameAsTrigger };
-
     internal class Cursor
     {
         private const float MAX_ANGLE = MathF.PI * 2;

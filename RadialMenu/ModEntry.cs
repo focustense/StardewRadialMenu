@@ -10,6 +10,7 @@ namespace RadialMenu
 
     public class ModEntry : Mod
     {
+        private Configuration config = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
         private Cursor cursor = null!;
         private Painter painter = null!;
@@ -17,7 +18,13 @@ namespace RadialMenu
 
         public override void Entry(IModHelper helper)
         {
-            cursor = new Cursor();
+            config = Helper.ReadConfig<Configuration>();
+            cursor = new Cursor()
+            {
+                ThumbStickPreference = config.ThumbStickPreference,
+                ThumbStickDeadZone = config.ThumbStickDeadZone,
+                TriggerDeadZone = config.TriggerDeadZone,
+            };
             painter = new(Game1.graphics.GraphicsDevice);
             preMenuState = new(Game1.freezeControls);
 
