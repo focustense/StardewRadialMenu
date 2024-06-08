@@ -74,7 +74,7 @@ namespace RadialMenu
 
         private void GameLoop_UpdateTicking(object? sender, UpdateTickingEventArgs e)
         {
-            if (!Context.IsPlayerFree && cursor.ActiveMenu == null)
+            if (!Context.CanPlayerMove && cursor.ActiveMenu == null)
             {
                 return;
             }
