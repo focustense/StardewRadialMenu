@@ -38,8 +38,7 @@ namespace RadialMenu
 
         private VertexPositionColor[] innerVertices = [];
         private VertexPositionColor[] outerVertices = [];
-        private SelectionState selectionState =
-            new SelectionState(/* ItemCount= */ 0, /* SelectedIndex= */ 0);
+        private SelectionState selectionState = new(/* ItemCount= */ 0, /* SelectedIndex= */ 0);
 
         public Painter(GraphicsDevice graphicsDevice)
         {
@@ -152,7 +151,7 @@ namespace RadialMenu
             var item = Items.Count > selectionState.SelectedIndex
                 ? Items[selectionState.SelectedIndex]
                 : null;
-            if (item == null)
+            if (item is null)
             {
                 return;
             }

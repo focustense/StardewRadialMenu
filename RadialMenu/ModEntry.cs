@@ -3,32 +3,22 @@ using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using System.Numerics;
-using System.Reflection;
 
 namespace RadialMenu
 {
-    enum MenuKind
-    {
-        Inventory,
-        Custom
-    }
-
     record PreMenuState(bool WasFrozen);
-
-    record MenuCursorState(float Angle, int SelectedIndex);
 
     public class ModEntry : Mod
     {
-        private MenuKind? activeMenu;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
-        private Painter menuPainter = null!;
+        private Cursor cursor = null!;
+        private Painter painter = null!;
         private PreMenuState preMenuState = null!;
-        private MenuCursorState? menuCursorState;
 
         public override void Entry(IModHelper helper)
         {
-            menuPainter = new(Game1.graphics.GraphicsDevice);
+            cursor = new Cursor();
+            painter = new(Game1.graphics.GraphicsDevice);
             preMenuState = new(Game1.freezeControls);
 
             // For optimal latency: handle input before the Update loop, perform actions/rendering after.
@@ -39,15 +29,15 @@ namespace RadialMenu
 
         private void Display_RenderedHud(object? sender, RenderedHudEventArgs e)
         {
-            if (activeMenu is null)
+            if (cursor.ActiveMenu is null)
             {
                 return;
             }
-            menuPainter.Paint(
+            painter.Paint(
                 e.SpriteBatch,
                 Game1.uiViewport,
-                menuCursorState?.SelectedIndex ?? -1,
-                menuCursorState?.Angle);
+                cursor.CurrentTarget?.SelectedIndex ?? -1,
+                cursor.CurrentTarget?.Angle);
         }
 
         private void GameLoop_UpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -60,14 +50,15 @@ namespace RadialMenu
 
         private void GameLoop_UpdateTicking(object? sender, UpdateTickingEventArgs e)
         {
-            if (!Context.IsPlayerFree && activeMenu == null)
+            if (!Context.IsPlayerFree && cursor.ActiveMenu == null)
             {
                 return;
             }
-            if (MaybeSetActiveMenu())
+            cursor.GamePadState = GetRawGamePadState();
+            cursor.UpdateActiveMenu();
+            if (cursor.WasMenuChanged)
             {
-                Monitor.Log($"Set active menu to {activeMenu}", LogLevel.Info);
-                if (activeMenu != null)
+                if (cursor.ActiveMenu is not null)
                 {
                     preMenuState = new(Game1.freezeControls);
                     Game1.player.completelyStopAnimatingOrDoingAction();
@@ -77,9 +68,11 @@ namespace RadialMenu
                 {
                     Game1.freezeControls = preMenuState.WasFrozen;
                 }
-                UpdateMenuItems();
+                UpdateMenuItems(cursor.ActiveMenu);
+                painter.Items = activeMenuItems;
             }
-            menuCursorState = ComputeMenuCursorState();
+            cursor.UpdateCurrentTarget(activeMenuItems.Count);
+
             // Here be dragons: because the triggers are analog values and SMAPI uses a deadzone,
             // it will race with Stardew (and usually lose), with the practical symptom being that
             // if we try to do the suppression in the "normal" spot (e.g. on input events), Stardew
@@ -95,80 +88,16 @@ namespace RadialMenu
             Helper.Input.Suppress(SButton.RightTrigger);
         }
 
-        private MenuKind? GetNextActiveMenu()
-        {
-            var rawGamePadState = GetRawGamePadState();
-            if (rawGamePadState.Triggers.Left > 0.2f)
-            {
-                return MenuKind.Inventory;
-            }
-            else if (rawGamePadState.Triggers.Right > 0.2f)
-            {
-                return MenuKind.Custom;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private bool MaybeSetActiveMenu()
-        {
-            var previousActiveMenu = activeMenu;
-            var nextActiveMenu = GetNextActiveMenu();
-            // Fighting between menus would be distracted; instead do first-come, first-serve.
-            // Whichever menu became active first, stays active until dismissed.
-            if (activeMenu != null && nextActiveMenu != null)
-            {
-                return false;
-            }
-            activeMenu = nextActiveMenu;
-            return activeMenu != previousActiveMenu;
-        }
-
-        private GamePadState GetRawGamePadState()
+        private static GamePadState GetRawGamePadState()
         {
             return Game1.playerOneIndex >= PlayerIndex.One
                 ? GamePad.GetState(Game1.playerOneIndex)
                 : new GamePadState();
         }
 
-        private MenuCursorState? ComputeMenuCursorState()
+        private void UpdateMenuItems(MenuKind? menu)
         {
-            if (activeMenu is null)
-            {
-                return null;
-            }
-            var thumbStickAngle = GetThumbStickAngle(GetRawGamePadState());
-            if (!thumbStickAngle.HasValue)
-            {
-                return null;
-            }
-            var itemCount = menuPainter.Items.Count;
-            if (itemCount == 0)
-            {
-                return new(thumbStickAngle.Value, -1);
-            }
-            var maxAngle = MathF.PI * 2;
-            var itemAngle = maxAngle / itemCount;
-            var selectedIndex = (int)MathF.Round(thumbStickAngle.Value / itemAngle) % itemCount;
-            return new(thumbStickAngle.Value, selectedIndex);
-        }
-
-        private float? GetThumbStickAngle(GamePadState state)
-        {
-            // TODO: Choose thumbstick based on active menu + config
-            var thumbStick = state.ThumbSticks.Right;
-            var maxAngle = MathF.PI * 2;
-            float? angle = thumbStick.Length() > 0.2f /* deadzone */
-                ? MathF.Atan2(thumbStick.X, thumbStick.Y)
-                : null;
-            return (angle + maxAngle) % maxAngle;
-        }
-
-        private void UpdateMenuItems()
-        {
-            menuPainter.Items = activeMenu switch
+            activeMenuItems = menu switch
             {
                 MenuKind.Inventory => Game1.player.Items
                     .Take(12) // Same number of items displayed in the toolbar
