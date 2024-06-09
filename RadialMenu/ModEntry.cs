@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using System.Reflection;
 
 namespace RadialMenu
 {
@@ -10,16 +11,23 @@ namespace RadialMenu
 
     public class ModEntry : Mod
     {
+        private const string GMCM_MOD_ID = "spacechase0.GenericModConfigMenu";
+
         private Configuration config = null!;
+        private IGenericModMenuConfigApi? configMenu;
+        private GenericModConfigKeyBindings? gmcmKeybindings;
+        private MenuItemBuilder menuItemBuilder = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
         private Cursor cursor = null!;
         private Painter painter = null!;
+        private KeybindActivator keybindActivator = null!;
         private PreMenuState preMenuState = null!;
         private Action? pendingActivation;
 
         public override void Entry(IModHelper helper)
         {
             config = Helper.ReadConfig<Configuration>();
+            menuItemBuilder = new(helper.GameContent, ActivateCustomMenuItem, Monitor);
             cursor = new Cursor()
             {
                 ThumbStickPreference = config.ThumbStickPreference,
@@ -27,8 +35,10 @@ namespace RadialMenu
                 TriggerDeadZone = config.TriggerDeadZone,
             };
             painter = new(Game1.graphics.GraphicsDevice);
+            keybindActivator = new(helper.Input);
             preMenuState = new(Game1.freezeControls);
 
+            helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             // For optimal latency: handle input before the Update loop, perform actions/rendering after.
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
@@ -47,6 +57,19 @@ namespace RadialMenu
                 Game1.uiViewport,
                 cursor.CurrentTarget?.SelectedIndex ?? -1,
                 cursor.CurrentTarget?.Angle);
+        }
+
+        private void GameLoop_GameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            configMenu = Helper.ModRegistry.GetApi<IGenericModMenuConfigApi>(GMCM_MOD_ID);
+            LoadGmcmKeybindings();
+            if (gmcmKeybindings is not null)
+            {
+                foreach (var option in gmcmKeybindings.AllOptions)
+                {
+                    Monitor.Log($"Found keybind option: {option.UniqueDisplayName}", LogLevel.Info);
+                }
+            }
         }
 
         private void GameLoop_UpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -160,9 +183,46 @@ namespace RadialMenu
             };
         }
 
+        private void LoadGmcmKeybindings()
+        {
+            if (configMenu is null)
+            {
+                Monitor.Log(
+                    $"Couldn't read global keybindings; mod {GMCM_MOD_ID} is not installed.",
+                    LogLevel.Warn);
+                return;
+            }
+            Monitor.Log("Generic Mod Config Menu is loaded; reading keybindings.", LogLevel.Info);
+            try
+            {
+                gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenu, Helper.Reflection);
+                Monitor.Log("Finished reading keybindings from GMCM.", LogLevel.Info);
+            }
+            catch (Exception ex)
+            when (ex is InvalidOperationException || ex is TargetInvocationException)
+            {
+                Monitor.Log(
+                    $"Couldn't read global keybindings; the current version of {GMCM_MOD_ID} is " +
+                    $"not compatible.\n{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}",
+                    LogLevel.Error);
+            }
+        }
+
         private void RestorePreMenuState()
         {
             Game1.freezeControls = preMenuState.WasFrozen;
+        }
+
+        private void ActivateCustomMenuItem(CustomMenuItem item)
+        {
+            if (!item.Keybind.IsBound)
+            {
+                Monitor.Log(
+                    $"Failed to activate '{item.Name}' because it has no configured key binding.",
+                    LogLevel.Warn);
+                return;
+            }
+            keybindActivator.Activate(item.Keybind);
         }
 
         private void UpdateMenuItems(MenuKind? menu)
@@ -172,9 +232,12 @@ namespace RadialMenu
                 MenuKind.Inventory => Game1.player.Items
                     .Take(config.MaxInventoryItems)
                     .Select((item, index) =>
-                        item != null ? MenuItem.FromGameItem(item, index) : null)
+                        item != null ? menuItemBuilder.GameItem(item, index) : null)
                     .Where(i => i is not null)
                     .Cast<MenuItem>()
+                    .ToList(),
+                MenuKind.Custom => config.CustomMenuItems
+                    .Select(item => menuItemBuilder.CustomItem(item))
                     .ToList(),
                 _ => [],
             };

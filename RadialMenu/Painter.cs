@@ -10,8 +10,11 @@ namespace RadialMenu
     {
         private record SelectionState(int ItemCount, int SelectedIndex);
 
-        private const float CIRCLE_MAX_ERROR = 1.0f;
+        private const float CIRCLE_MAX_ERROR = 0.1f;
         private const float EQUILATERAL_ANGLE = MathF.PI * 2 / 3;
+        private const int MENU_SPRITE_HEIGHT = 64;
+        private const float MENU_SPRITE_MAX_WIDTH_RATIO = 0.8f;
+        private const int SELECTION_SPRITE_HEIGHT = 128;
         private const float TWO_PI = MathF.PI * 2;
 
         private static readonly float ROOT_3 = MathF.Sqrt(3);
@@ -110,23 +113,37 @@ namespace RadialMenu
             var itemRadius = InnerRadius + GapWidth + OuterRadius / 2.0f;
             var angleBetweenItems = TWO_PI / Items.Count;
             var t = 0.0f;
-            int spriteSize = 64;
             foreach (var item in Items)
             {
                 var itemPoint = GetCirclePoint(itemRadius, t);
+                var displaySize = GetScaledSize(item, MENU_SPRITE_HEIGHT);
+                // Aspect ratio is usually almost square, or has extra height (e.g. big craftables).
+                // In case of a horizontal aspect ratio, shrink the size so that it still fits.
+                var maxWidth = OuterRadius * MENU_SPRITE_MAX_WIDTH_RATIO;
+                if (displaySize.X > maxWidth)
+                {
+                    var scale = maxWidth / displaySize.X;
+                    displaySize = new(
+                        (int)MathF.Round(displaySize.X * scale),
+                        (int)MathF.Round(displaySize.Y * scale));
+                }
+                var sourceSize =
+                    item.SourceRectangle?.Size
+                    ?? new Point(item.Texture.Width, item.Texture.Height);
+                var aspectRatio = (float)sourceSize.X / sourceSize.Y;
                 // Sprites draw from top left rather than center; we have to adjust for it.
                 var itemPoint2d = new Vector2(
-                    centerX + itemPoint.X - spriteSize / 2.0f,
-                    centerY + itemPoint.Y - spriteSize / 2.0f);
-                var destinationRect =
-                    new Rectangle(itemPoint2d.ToPoint(), new Point(spriteSize, spriteSize));
+                    centerX + itemPoint.X - displaySize.X / 2.0f,
+                    centerY + itemPoint.Y - displaySize.Y / 2.0f);
+                var destinationRect = new Rectangle(itemPoint2d.ToPoint(), displaySize);
+                var shadowTexture = Game1.shadowTexture;
                 spriteBatch.Draw(
-                    Game1.shadowTexture,
+                    shadowTexture,
                     destinationRect.Location.ToVector2() + new Vector2(32f, 52f),
-                    Game1.shadowTexture.Bounds,
+                    shadowTexture.Bounds,
                     new Color(Color.Gray, 0.5f),
                     0.0f,
-                    new Vector2(Game1.shadowTexture.Bounds.Center.X, Game1.shadowTexture.Bounds.Center.Y),
+                    new Vector2(shadowTexture.Bounds.Center.X, shadowTexture.Bounds.Center.Y),
                     3f,
                     SpriteEffects.None,
                     -0.0001f);
@@ -152,7 +169,7 @@ namespace RadialMenu
 
             var centerX = viewport.Width / 2.0f;
             var centerY = viewport.Height / 2.0f;
-            var itemDrawSize = new Point(128, 128);
+            var itemDrawSize = GetScaledSize(item, SELECTION_SPRITE_HEIGHT);
             var itemPos =
                 new Vector2(centerX - itemDrawSize.X / 2, centerY - itemDrawSize.Y - 24);
             var itemRect = new Rectangle(itemPos.ToPoint(), itemDrawSize);
@@ -211,7 +228,7 @@ namespace RadialMenu
             {
                 var isHighlighted = highlightStartSegment < highlightEndSegment
                     ? (i >= highlightStartSegment && i < highlightEndSegment)
-                    : (i > highlightStartSegment || i < highlightEndSegment);
+                    : (i >= highlightStartSegment || i < highlightEndSegment);
                 var outerIndex = i * outerChordSize;
                 var outerColor = isHighlighted ? Color.RoyalBlue: OuterBackgroundColor;
                 for (var j = 0; j < outerChordSize; j++)
@@ -302,6 +319,16 @@ namespace RadialMenu
         {
             var optimalAngle = Math.Acos(1 - CIRCLE_MAX_ERROR / radius);
             return (int) Math.Ceiling(TWO_PI / optimalAngle);
+        }
+
+        private static Point GetScaledSize(MenuItem item, int height)
+        {
+            var sourceSize =
+                    item.SourceRectangle?.Size
+                    ?? new Point(item.Texture.Width, item.Texture.Height);
+            var aspectRatio = (float)sourceSize.X / sourceSize.Y;
+            var width = (int)MathF.Round(height * aspectRatio);
+            return new(width, height);
         }
 
         private static IEnumerable<string> WrapText(SpriteFont font, string text, float maxLineWidth)
