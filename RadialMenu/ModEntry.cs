@@ -46,6 +46,7 @@ namespace RadialMenu
             helper.Events.Display.RenderedHud += Display_RenderedHud;
         }
 
+        [EventPriority(EventPriority.Low)]
         private void Display_RenderedHud(object? sender, RenderedHudEventArgs e)
         {
             if (cursor.ActiveMenu is null)

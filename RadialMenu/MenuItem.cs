@@ -10,6 +10,8 @@ namespace RadialMenu
     internal record MenuItem(
         string Title,
         string Description,
+        int? StackSize,
+        int? Quality,
         Texture2D Texture,
         Rectangle? SourceRectangle,
         Action Activate);
@@ -32,6 +34,8 @@ namespace RadialMenu
             return new(
                 item.Name,
                 item.Description,
+                /* StackSize= */ null,
+                /* Quality= */ null,
                 sprite.Texture,
                 sprite.SourceRect,
                 () => customItemActivator.Invoke(item));
@@ -45,6 +49,8 @@ namespace RadialMenu
             return new(
                 data.DisplayName,
                 data.Description,
+                item.maximumStackSize() > 1 ? item.Stack : null,
+                item.Quality,
                 texture,
                 sourceRect,
                 () => FuzzyActivation.ConsumeOrSelect(itemIndex));

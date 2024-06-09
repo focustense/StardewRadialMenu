@@ -1,4 +1,5 @@
 ﻿using StardewValley;
+using StardewValley.Locations;
 
 namespace RadialMenu
 {
@@ -22,6 +23,13 @@ namespace RadialMenu
 
         private static bool TryConsume(Item item)
         {
+            if (item.Name == "Staircase" && Game1.currentLocation is MineShaft mineShaft)
+            {
+                ReduceStack(item);
+                Game1.enterMine(mineShaft.mineLevel + 1);
+                Game1.playSound("stairsdown");
+                return true;
+            }
             if (item is not StardewValley.Object obj)
             {
                 return false;
@@ -35,15 +43,15 @@ namespace RadialMenu
             return obj.performUseAction(Game1.currentLocation);
         }
 
-        private static void ReduceStack(StardewValley.Object obj)
+        private static void ReduceStack(Item item)
         {
-            if (obj.Stack > 1)
+            if (item.Stack > 1)
             {
-                obj.Stack--;
+                item.Stack--;
             }
             else
             {
-                Game1.player.Items.RemoveButKeepEmptySlot(obj);
+                Game1.player.Items.RemoveButKeepEmptySlot(item);
             }
         }
     }

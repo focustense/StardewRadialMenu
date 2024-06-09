@@ -22,12 +22,15 @@ namespace RadialMenu
         public Color InnerBackgroundColor { get; init; } = new Color(0.05f, 0.05f, 0.05f, 0.9f);
         public float InnerRadius { get; init; } = 300;
         public Color OuterBackgroundColor { get; init; } = new Color(0.91f, 0.73f, 0.49f, 0.9f);
-        public float OuterRadius { get; init; } = 100;
+        public float OuterRadius { get; init; } = 110;
         public Color HighlightColor { get; init; } = Color.RoyalBlue;
         public float GapWidth { get; init; } = 8;
         public float CursorDistance { get; init; } = 8;
         public float CursorSize { get; init; } = 32;
         public Color CursorColor { get; init; } = Color.LightGray;
+        public Color StackSizeColor { get; init; } = Color.White;
+        public Color SelectionTitleColor { get; init; } = Color.White;
+        public Color SelectionDescriptionColor { get; init; } = Color.LightGray;
         public IReadOnlyList<MenuItem> Items { get; set; } = [];
 
         private readonly GraphicsDevice graphicsDevice;
@@ -148,6 +151,42 @@ namespace RadialMenu
                     SpriteEffects.None,
                     -0.0001f);
                 spriteBatch.Draw(item.Texture, destinationRect, item.SourceRectangle, Color.White);
+                if (item.Quality is int quality && quality > 0)
+                {
+                    // From StardewValley:Object.cs
+                    var qualitySourceRect = quality < 4
+                        ? new Rectangle(338 + (quality - 1) * 8, 400, 8, 8)
+                        : new Rectangle(346, 392, 8, 8);
+                    var qualityIconPos = new Vector2(
+                        destinationRect.Left,
+                        destinationRect.Bottom - 16);
+                    spriteBatch.Draw(
+                        Game1.mouseCursors,
+                        qualityIconPos,
+                        qualitySourceRect,
+                        Color.White,
+                        /* rotation= */ 0,
+                        Vector2.Zero,
+                        /* scale= */ 3.0f,
+                        SpriteEffects.None,
+                        /* layerDepth= */ 0.1f);
+                }
+                if (item.StackSize is int stackSize)
+                {
+                    var stackTextScale = 3.0f;
+                    var stackTextWidth =
+                        Utility.getWidthOfTinyDigitString(stackSize, stackTextScale);
+                    var stackLabelPos = new Vector2(
+                        destinationRect.Right - stackTextWidth,
+                        destinationRect.Bottom - 8);
+                    Utility.drawTinyDigits(
+                        stackSize,
+                        spriteBatch,
+                        stackLabelPos,
+                        stackTextScale,
+                        /* layerDepth= */ 0.1f,
+                        StackSizeColor);
+                }
                 t += angleBetweenItems;
             }
         }
@@ -178,7 +217,7 @@ namespace RadialMenu
             var labelFont = Game1.dialogueFont;
             var labelSize = labelFont.MeasureString(item.Title);
             var labelPos = new Vector2(centerX - labelSize.X / 2.0f, centerY);
-            spriteBatch.DrawString(labelFont, item.Title, labelPos, Color.White);
+            spriteBatch.DrawString(labelFont, item.Title, labelPos, SelectionTitleColor);
 
             var descriptionFont = Game1.smallFont;
             var descriptionText = item.Description;
@@ -188,7 +227,8 @@ namespace RadialMenu
                 var descriptionSize = descriptionFont.MeasureString(descriptionLine);
                 var descriptionPos = new Vector2(centerX - descriptionSize.X / 2.0f, descriptionY);
                 descriptionY += descriptionFont.LineSpacing;
-                spriteBatch.DrawString(descriptionFont, descriptionLine, descriptionPos, Color.LightGray);
+                spriteBatch.DrawString(
+                    descriptionFont, descriptionLine, descriptionPos, SelectionDescriptionColor);
             }
         }
 
