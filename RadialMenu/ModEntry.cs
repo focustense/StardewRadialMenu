@@ -15,7 +15,7 @@ namespace RadialMenu
 
         private Configuration config = null!;
         private IGenericModMenuConfigApi? configMenu;
-        private GenericModConfigKeyBindings? gmcmKeybindings;
+        private GenericModConfigSync? gmcmSync;
         private MenuItemBuilder menuItemBuilder = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
         private Cursor cursor = null!;
@@ -59,17 +59,11 @@ namespace RadialMenu
                 cursor.CurrentTarget?.Angle);
         }
 
+        [EventPriority(EventPriority.Low - 10)]
         private void GameLoop_GameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             configMenu = Helper.ModRegistry.GetApi<IGenericModMenuConfigApi>(GMCM_MOD_ID);
             LoadGmcmKeybindings();
-            if (gmcmKeybindings is not null)
-            {
-                foreach (var option in gmcmKeybindings.AllOptions)
-                {
-                    Monitor.Log($"Found keybind option: {option.UniqueDisplayName}", LogLevel.Info);
-                }
-            }
         }
 
         private void GameLoop_UpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -195,8 +189,21 @@ namespace RadialMenu
             Monitor.Log("Generic Mod Config Menu is loaded; reading keybindings.", LogLevel.Info);
             try
             {
-                gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenu, Helper.Reflection);
+                var gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenu, Helper.Reflection);
                 Monitor.Log("Finished reading keybindings from GMCM.", LogLevel.Info);
+                if (config.DumpAvailableKeyBindingsOnStartup)
+                {
+                    foreach (var option in gmcmKeybindings.AllOptions)
+                    {
+                        Monitor.Log(
+                            "Found keybind option: " +
+                            $"[{option.ModManifest.UniqueID}] - {option.UniqueFieldName}",
+                            LogLevel.Info);
+                    }
+                }
+                gmcmSync = new(config, gmcmKeybindings, Monitor);
+                gmcmSync.SyncAll();
+                Helper.WriteConfig(config);
             }
             catch (Exception ex)
             when (ex is InvalidOperationException || ex is TargetInvocationException)
