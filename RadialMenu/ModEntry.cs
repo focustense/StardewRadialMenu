@@ -35,7 +35,7 @@ namespace RadialMenu
                 ThumbStickDeadZone = config.ThumbStickDeadZone,
                 TriggerDeadZone = config.TriggerDeadZone,
             };
-            painter = new(Game1.graphics.GraphicsDevice);
+            painter = new(Game1.graphics.GraphicsDevice, config.Styles);
             keybindActivator = new(helper.Input);
             preMenuState = new(Game1.freezeControls);
 

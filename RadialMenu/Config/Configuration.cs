@@ -62,6 +62,11 @@ public class Configuration
     public List<CustomMenuItemConfiguration> CustomMenuItems { get; set; } = [];
 
     /// <summary>
+    /// Configures the overall appearance of the menu.
+    /// </summary>
+    public Styles Styles { get; set; } = new();
+
+    /// <summary>
     /// Debug option that prints the list of all registered GMCM key bindings when starting the
     /// game.
     /// </summary>
