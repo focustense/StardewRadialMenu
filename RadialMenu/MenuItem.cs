@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using RadialMenu.Config;
 using StardewModdingAPI;
 using StardewValley;
 using System.Diagnostics.CodeAnalysis;
@@ -18,12 +19,12 @@ namespace RadialMenu
 
     internal class MenuItemBuilder(
         IGameContentHelper contentHelper,
-        Action<CustomMenuItem> customItemActivator,
+        Action<CustomMenuItemConfiguration> customItemActivator,
         IMonitor monitor)
     {
         private readonly Dictionary<(SpriteSourceFormat, string), CachedSprite> cachedSprites = [];
 
-        public MenuItem CustomItem(CustomMenuItem item)
+        public MenuItem CustomItem(CustomMenuItemConfiguration item)
         {
             var cacheKey = (item.SpriteSourceFormat, item.SpriteSourcePath);
             if (!cachedSprites.TryGetValue(cacheKey, out var sprite))

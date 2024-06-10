@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using RadialMenu.Config;
+using StardewModdingAPI;
 
 namespace RadialMenu
 {
@@ -7,7 +8,7 @@ namespace RadialMenu
         GenericModConfigKeyBindings bindings,
         IMonitor monitor)
     {
-        public void Sync(CustomMenuItem item)
+        public void Sync(CustomMenuItemConfiguration item)
         {
             if (item.Gmcm is not GmcmAssociation gmcm)
             {

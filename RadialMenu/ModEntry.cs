@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using RadialMenu.Config;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -108,7 +109,7 @@ namespace RadialMenu
                 }
                 else
                 {
-                    if (config.Activation == ItemActivation.TriggerRelease)
+                    if (config.Activation == ItemActivationMethod.TriggerRelease)
                     {
                         pendingActivation = GetSelectedItemActivation();
                     }
@@ -139,7 +140,7 @@ namespace RadialMenu
             if (!Context.IsWorldReady
                 || cursor.ActiveMenu is null
                 || cursor.CurrentTarget is null
-                || config.Activation == ItemActivation.TriggerRelease)
+                || config.Activation == ItemActivationMethod.TriggerRelease)
             {
                 return;
             }
@@ -172,8 +173,8 @@ namespace RadialMenu
         {
             return config.Activation switch
             {
-                ItemActivation.ActionButtonPress => button.IsActionButton(),
-                ItemActivation.ThumbStickPress => cursor.IsThumbStickForActiveMenu(button),
+                ItemActivationMethod.ActionButtonPress => button.IsActionButton(),
+                ItemActivationMethod.ThumbStickPress => cursor.IsThumbStickForActiveMenu(button),
                 _ => false,
             };
         }
@@ -221,7 +222,7 @@ namespace RadialMenu
             Game1.freezeControls = preMenuState.WasFrozen;
         }
 
-        private void ActivateCustomMenuItem(CustomMenuItem item)
+        private void ActivateCustomMenuItem(CustomMenuItemConfiguration item)
         {
             if (!item.Keybind.IsBound)
             {
