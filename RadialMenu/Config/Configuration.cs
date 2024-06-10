@@ -2,6 +2,8 @@
 
 public class Configuration
 {
+    private static readonly Configuration Default = new();
+
     /// <summary>
     /// Dead zone for the left/right trigger buttons for activating/deactivating the menu.
     /// </summary>

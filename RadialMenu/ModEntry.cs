@@ -15,7 +15,8 @@ namespace RadialMenu
         private const string GMCM_MOD_ID = "spacechase0.GenericModConfigMenu";
 
         private Configuration config = null!;
-        private IGenericModMenuConfigApi? configMenu;
+        private ConfigMenu? configMenu;
+        private IGenericModMenuConfigApi? configMenuApi;
         private GenericModConfigSync? gmcmSync;
         private MenuItemBuilder menuItemBuilder = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
@@ -29,15 +30,11 @@ namespace RadialMenu
         {
             config = Helper.ReadConfig<Configuration>();
             menuItemBuilder = new(helper.GameContent, ActivateCustomMenuItem, Monitor);
-            cursor = new Cursor()
-            {
-                ThumbStickPreference = config.ThumbStickPreference,
-                ThumbStickDeadZone = config.ThumbStickDeadZone,
-                TriggerDeadZone = config.TriggerDeadZone,
-            };
-            painter = new(Game1.graphics.GraphicsDevice, config.Styles);
+            cursor = new Cursor();
+            painter = new(Game1.graphics.GraphicsDevice);
             keybindActivator = new(helper.Input);
             preMenuState = new(Game1.freezeControls);
+            ApplyConfiguration();
 
             helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             // For optimal latency: handle input before the Update loop, perform actions/rendering after.
@@ -64,8 +61,9 @@ namespace RadialMenu
         [EventPriority(EventPriority.Low - 10)]
         private void GameLoop_GameLaunched(object? sender, GameLaunchedEventArgs e)
         {
-            configMenu = Helper.ModRegistry.GetApi<IGenericModMenuConfigApi>(GMCM_MOD_ID);
+            configMenuApi = Helper.ModRegistry.GetApi<IGenericModMenuConfigApi>(GMCM_MOD_ID);
             LoadGmcmKeybindings();
+            RegisterConfigMenu();
         }
 
         private void GameLoop_UpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -155,6 +153,14 @@ namespace RadialMenu
             }
         }
 
+        private void ApplyConfiguration()
+        {
+            painter.Styles = config.Styles;
+            cursor.ThumbStickPreference = config.ThumbStickPreference;
+            cursor.ThumbStickDeadZone = config.ThumbStickDeadZone;
+            cursor.TriggerDeadZone = config.TriggerDeadZone;
+        }
+
         private static GamePadState GetRawGamePadState()
         {
             return Game1.playerOneIndex >= PlayerIndex.One
@@ -181,7 +187,7 @@ namespace RadialMenu
 
         private void LoadGmcmKeybindings()
         {
-            if (configMenu is null)
+            if (configMenuApi is null)
             {
                 Monitor.Log(
                     $"Couldn't read global keybindings; mod {GMCM_MOD_ID} is not installed.",
@@ -191,7 +197,7 @@ namespace RadialMenu
             Monitor.Log("Generic Mod Config Menu is loaded; reading keybindings.", LogLevel.Info);
             try
             {
-                var gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenu, Helper.Reflection);
+                var gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenuApi, Helper.Reflection);
                 Monitor.Log("Finished reading keybindings from GMCM.", LogLevel.Info);
                 if (config.DumpAvailableKeyBindingsOnStartup)
                 {
@@ -203,7 +209,7 @@ namespace RadialMenu
                             LogLevel.Info);
                     }
                 }
-                gmcmSync = new(config, gmcmKeybindings, Monitor);
+                gmcmSync = new(() => config, gmcmKeybindings, Monitor);
                 gmcmSync.SyncAll();
                 Helper.WriteConfig(config);
             }
@@ -215,6 +221,26 @@ namespace RadialMenu
                     $"not compatible.\n{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}",
                     LogLevel.Error);
             }
+        }
+
+        private void RegisterConfigMenu()
+        {
+            if (configMenuApi is null)
+            {
+                return;
+            }
+            configMenuApi.Register(
+                mod: ModManifest,
+                reset: ResetConfiguration,
+                save: () => Helper.WriteConfig(config));
+            configMenu = new(configMenuApi, ModManifest, Helper.Translation, () => config);
+            configMenu.Setup();
+        }
+
+        private void ResetConfiguration()
+        {
+            config = new();
+            ApplyConfiguration();
         }
 
         private void RestorePreMenuState()

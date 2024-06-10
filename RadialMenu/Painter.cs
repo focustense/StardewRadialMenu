@@ -19,19 +19,18 @@ namespace RadialMenu
         private static readonly float ROOT_3 = MathF.Sqrt(3);
 
         public IReadOnlyList<MenuItem> Items { get; set; } = [];
+        public Styles Styles { get; set; } = null!;
 
         private readonly GraphicsDevice graphicsDevice;
-        private readonly Styles styles;
         private readonly BasicEffect effect;
 
         private VertexPositionColor[] innerVertices = [];
         private VertexPositionColor[] outerVertices = [];
         private SelectionState selectionState = new(/* ItemCount= */ 0, /* SelectedIndex= */ 0);
 
-        public Painter(GraphicsDevice graphicsDevice, Styles styles)
+        public Painter(GraphicsDevice graphicsDevice)
         {
             this.graphicsDevice = graphicsDevice;
-            this.styles = styles;
             effect = new BasicEffect(graphicsDevice)
             {
                 World = Matrix.Identity,
@@ -73,7 +72,7 @@ namespace RadialMenu
                 // Cursor is just 1 triangle, so we can compute this on every frame.
                 var cursorVertices = selectionAngle != null
                     ? GenerateCursorVertices(
-                        styles.InnerRadius - styles.CursorDistance,
+                        Styles.InnerRadius - Styles.CursorDistance,
                         selectionAngle.Value)
                     : [];
                 foreach (var pass in effect.CurrentTechnique.Passes)
@@ -104,16 +103,16 @@ namespace RadialMenu
         {
             var centerX = viewport.Width / 2.0f;
             var centerY = viewport.Height / 2.0f;
-            var itemRadius = styles.InnerRadius + styles.GapWidth + styles.OuterRadius / 2.0f;
+            var itemRadius = Styles.InnerRadius + Styles.GapWidth + Styles.OuterRadius / 2.0f;
             var angleBetweenItems = TWO_PI / Items.Count;
             var t = 0.0f;
             foreach (var item in Items)
             {
                 var itemPoint = GetCirclePoint(itemRadius, t);
-                var displaySize = GetScaledSize(item, styles.MenuSpriteHeight);
+                var displaySize = GetScaledSize(item, Styles.MenuSpriteHeight);
                 // Aspect ratio is usually almost square, or has extra height (e.g. big craftables).
                 // In case of a horizontal aspect ratio, shrink the size so that it still fits.
-                var maxWidth = styles.OuterRadius * MENU_SPRITE_MAX_WIDTH_RATIO;
+                var maxWidth = Styles.OuterRadius * MENU_SPRITE_MAX_WIDTH_RATIO;
                 if (displaySize.X > maxWidth)
                 {
                     var scale = maxWidth / displaySize.X;
@@ -176,7 +175,7 @@ namespace RadialMenu
                         stackLabelPos,
                         stackTextScale,
                         /* layerDepth= */ 0.1f,
-                        styles.StackSizeColor);
+                        Styles.StackSizeColor);
                 }
                 t += angleBetweenItems;
             }
@@ -199,7 +198,7 @@ namespace RadialMenu
 
             var centerX = viewport.Width / 2.0f;
             var centerY = viewport.Height / 2.0f;
-            var itemDrawSize = GetScaledSize(item, styles.SelectionSpriteHeight);
+            var itemDrawSize = GetScaledSize(item, Styles.SelectionSpriteHeight);
             var itemPos =
                 new Vector2(centerX - itemDrawSize.X / 2, centerY - itemDrawSize.Y - 24);
             var itemRect = new Rectangle(itemPos.ToPoint(), itemDrawSize);
@@ -208,7 +207,7 @@ namespace RadialMenu
             var labelFont = Game1.dialogueFont;
             var labelSize = labelFont.MeasureString(item.Title);
             var labelPos = new Vector2(centerX - labelSize.X / 2.0f, centerY);
-            spriteBatch.DrawString(labelFont, item.Title, labelPos, styles.SelectionTitleColor);
+            spriteBatch.DrawString(labelFont, item.Title, labelPos, Styles.SelectionTitleColor);
 
             var descriptionFont = Game1.smallFont;
             var descriptionText = item.Description;
@@ -222,7 +221,7 @@ namespace RadialMenu
                     descriptionFont,
                     descriptionLine,
                     descriptionPos,
-                    styles.SelectionDescriptionColor);
+                    Styles.SelectionDescriptionColor);
             }
         }
 
@@ -231,14 +230,14 @@ namespace RadialMenu
             if (innerVertices.Length == 0)
             {
                 innerVertices =
-                    GenerateCircleVertices(styles.InnerRadius, styles.InnerBackgroundColor);
+                    GenerateCircleVertices(Styles.InnerRadius, Styles.InnerBackgroundColor);
             }
             if (outerVertices.Length == 0)
             {
                 outerVertices = GenerateDonutVertices(
-                    styles.InnerRadius + styles.GapWidth,
-                    styles.OuterRadius,
-                    styles.OuterBackgroundColor);
+                    Styles.InnerRadius + Styles.GapWidth,
+                    Styles.OuterRadius,
+                    Styles.OuterBackgroundColor);
             }
         }
 
@@ -249,7 +248,7 @@ namespace RadialMenu
             {
                 for (var i = 0; i < outerVertices.Length; i++)
                 {
-                    outerVertices[i].Color = styles.OuterBackgroundColor;
+                    outerVertices[i].Color = Styles.OuterBackgroundColor;
                 }
                 return;
             }
@@ -267,7 +266,7 @@ namespace RadialMenu
                     ? (i >= highlightStartSegment && i < highlightEndSegment)
                     : (i >= highlightStartSegment || i < highlightEndSegment);
                 var outerIndex = i * outerChordSize;
-                var outerColor = isHighlighted ? Color.RoyalBlue : styles.OuterBackgroundColor;
+                var outerColor = isHighlighted ? Color.RoyalBlue : Styles.OuterBackgroundColor;
                 for (var j = 0; j < outerChordSize; j++)
                 {
                     outerVertices[outerIndex + j].Color = outerColor;
@@ -329,9 +328,9 @@ namespace RadialMenu
 
         private VertexPositionColor[] GenerateCursorVertices(float tipRadius, float angle)
         {
-            var center = GetCirclePoint(tipRadius - styles.CursorSize / 2, angle);
+            var center = GetCirclePoint(tipRadius - Styles.CursorSize / 2, angle);
             // Compute the points for an origin-centered triangle, then offset.
-            var radius = styles.CursorSize / ROOT_3;
+            var radius = Styles.CursorSize / ROOT_3;
             var p1 = center + radius * new Vector3(MathF.Sin(angle), -MathF.Cos(angle), 0);
             var angle2 = angle + EQUILATERAL_ANGLE;
             var p2 = center + radius * new Vector3(MathF.Sin(angle2), -MathF.Cos(angle2), 0);
@@ -339,9 +338,9 @@ namespace RadialMenu
             var p3 = center + radius * new Vector3(MathF.Sin(angle3), -MathF.Cos(angle3), 0);
             return
             [
-                new VertexPositionColor(p1, styles.CursorColor),
-                new VertexPositionColor(p2, styles.CursorColor),
-                new VertexPositionColor(p3, styles.CursorColor),
+                new VertexPositionColor(p1, Styles.CursorColor),
+                new VertexPositionColor(p2, Styles.CursorColor),
+                new VertexPositionColor(p3, Styles.CursorColor),
             ];
         }
 

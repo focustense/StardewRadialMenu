@@ -4,7 +4,7 @@ using StardewModdingAPI;
 namespace RadialMenu
 {
     internal class GenericModConfigSync(
-        Configuration config,
+        Func<Configuration> getConfig,
         GenericModConfigKeyBindings bindings,
         IMonitor monitor)
     {
@@ -47,6 +47,7 @@ namespace RadialMenu
 
         public void SyncAll()
         {
+            var config = getConfig();
             foreach (var item in config.CustomMenuItems)
             {
                 Sync(item);

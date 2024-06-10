@@ -1,0 +1,20 @@
+{
+  "gmcm.controls": "Controls",
+  "gmcm.controls.trigger.deadzone": "Trigger Dead Zone",
+  "gmcm.controls.trigger.deadzone.tooltip": "Helps prevent accidental triggering on very sensitive or inaccurate controllers",
+  "gmcm.controls.thumbstick.preference": "Thumbstick Preference",
+  "gmcm.controls.thumbstick.preference.tooltip": "Choose which thumbstick controls the menu selection",
+  "gmcm.controls.thumbstick.preference.alwaysleft": "Left Stick",
+  "gmcm.controls.thumbstick.preference.alwaysright": "Right Stick",
+  "gmcm.controls.thumbstick.preference.sameastrigger": "Same as Trigger",
+  "gmcm.controls.thumbstick.deadzone": "Thumbstick Dead Zone",
+  "gmcm.controls.thumbstick.deadzone.tooltip": "Corrects for inaccuracy or drift on thumbsticks for many controllers",
+  "gmcm.controls.activation": "Item Activation",
+  "gmcm.controls.activation.tooltip": "Which input activates the selected item?",
+  "gmcm.controls.activation.actionbuttonpress": "Action Button Press",
+  "gmcm.controls.activation.thumbstickpress": "Thumbstick Press",
+  "gmcm.controls.activation.triggerrelease": "Trigger Release",
+  "gmcm.inventory": "Inventory Menu",
+  "gmcm.inventory.max": "Max Items",
+  "gmcm.inventory.max.tooltip": "Maximum number of items to show in the inventory menu. Empty slots are counted against the limit, but not displayed."
+}

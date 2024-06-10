@@ -13,8 +13,8 @@ namespace RadialMenu
     {
         private const float MAX_ANGLE = MathF.PI * 2;
 
-        public float ThumbStickDeadZone { get; init; } = 0.2f;
-        public float TriggerDeadZone { get; init; } = 0.2f;
+        public float ThumbStickDeadZone { get; set; } = 0.2f;
+        public float TriggerDeadZone { get; set; } = 0.2f;
         public GamePadState GamePadState { get; set; }
         public ThumbStickPreference ThumbStickPreference { get; set; }
         public MenuKind? ActiveMenu { get; private set; }
