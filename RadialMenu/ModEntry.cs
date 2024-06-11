@@ -233,7 +233,12 @@ namespace RadialMenu
                 mod: ModManifest,
                 reset: ResetConfiguration,
                 save: () => Helper.WriteConfig(config));
-            configMenu = new(configMenuApi, ModManifest, Helper.Translation, () => config);
+            configMenu = new(
+                configMenuApi,
+                ModManifest,
+                Helper.Translation,
+                Helper.ModContent,
+                () => config);
             configMenu.Setup();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
@@ -23,6 +24,58 @@ namespace RadialMenu.Config
         {
             return color.color;
         }
+
+        public static HexColor Parse(string hexString)
+        {
+            return TryParse(hexString, out var result)
+                ? result
+                : throw new FormatException($"Invalid hex color string: {hexString}");
+        }
+
+        public static bool TryParse(string hexString, [MaybeNullWhen(false)] out HexColor result)
+        {
+            result = null;
+            hexString = hexString.Trim().TrimStart('#');
+            if (hexString.Length == 3)
+            {
+                // Not an especially elegant way to repeat the characters in a string, but probably
+                // the most efficient for running in a possibly-tight deserialization method.
+                hexString = new StringBuilder()
+                    .Append(hexString[0], 2)
+                    .Append(hexString[1], 2)
+                    .Append(hexString[2], 2)
+                    .ToString();
+            }
+            if (hexString.Length != 6 && hexString.Length != 8)
+            {
+                return false;
+            }
+            if (!uint.TryParse(hexString, NumberStyles.HexNumber, null, out var argb))
+            {
+                return false;
+            }
+            var (a, r, g, b) = (
+                hexString.Length > 6 ? (argb & 0xff000000) >> 24 : 0xff,
+                (argb & 0xff0000) >> 16,
+                (argb & 0xff00) >> 8,
+                argb & 0xff);
+            result = new HexColor(new Color((byte)r, (byte)g, (byte)b, (byte)a));
+            return true;
+        }
+
+        public override string ToString()
+        {
+            var hexString = new StringBuilder("#");
+            if (color.A < 255)
+            {
+                hexString.Append(color.A.ToString("x2"));
+            }
+            hexString
+                .Append(color.R.ToString("x2"))
+                .Append(color.G.ToString("x2"))
+                .Append(color.B.ToString("x2"));
+            return hexString.ToString();
+        }
     }
 
     class HexColorConverter : JsonConverter<HexColor>
@@ -38,28 +91,8 @@ namespace RadialMenu.Config
             {
                 return null;
             }
-            var hexString = (reader.Value as string)?.Trim().TrimStart('#');
-            if (string.IsNullOrEmpty(hexString))
-            {
-                return null;
-            }
-            if (hexString.Length == 3)
-            {
-                // Not an especially elegant way to repeat the characters in a string, but probably
-                // the most efficient for running in a possibly-tight deserialization method.
-                hexString = new StringBuilder()
-                    .Append(hexString[0], 2)
-                    .Append(hexString[1], 2)
-                    .Append(hexString[2], 2)
-                    .ToString();
-            }
-            var argb = uint.Parse(hexString, NumberStyles.HexNumber);
-            var (a, r, g, b) = (
-                hexString.Length > 6 ? (argb & 0xff000000) >> 24 : 0xff,
-                (argb & 0xff0000) >> 16,
-                (argb & 0xff00) >> 8,
-                argb & 0xff);
-            return new HexColor(new Color((byte)r, (byte)g, (byte)b, (byte)a));
+            var hexString = (reader.Value as string);
+            return !string.IsNullOrEmpty(hexString) ? HexColor.Parse(hexString) : null;
         }
 
         public override void WriteJson(JsonWriter writer, HexColor? value, JsonSerializer serializer)
@@ -69,17 +102,7 @@ namespace RadialMenu.Config
                 writer.WriteNull();
                 return;
             }
-            Color color = hexColor;
-            var hexString = new StringBuilder("#");
-            if (color.A < 255)
-            {
-                hexString.Append(color.A.ToString("x2"));
-            }
-            hexString
-                .Append(color.R.ToString("x2"))
-                .Append(color.G.ToString("x2"))
-                .Append(color.B.ToString("x2"));
-            writer.WriteValue(hexString.ToString());
+            writer.WriteValue(hexColor.ToString());
         }
     }
 }
