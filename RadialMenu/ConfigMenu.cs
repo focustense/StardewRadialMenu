@@ -11,17 +11,21 @@ internal class ConfigMenu(
     IManifest mod,
     ITranslationHelper translations,
     IModContentHelper modContent,
+    TextureHelper textureHelper,
     Func<Configuration> getConfig)
 {
     private const string CUSTOM_MENU_PAGE_ID = "CustomMenu";
     private const string STYLE_PAGE_ID = "MenuStyle";
     private const string FIELD_ID_PREFIX = "focustense.RadialMenu";
+    // Fields related to menu colors; these update the preview.
     private const string FIELD_ID_INNER_COLOR = $"{FIELD_ID_PREFIX}.Style.InnerBackgroundColor";
     private const string FIELD_ID_OUTER_COLOR = $"{FIELD_ID_PREFIX}.Style.OuterBackgroundColor";
     private const string FIELD_ID_HIGHLIGHT_COLOR = $"{FIELD_ID_PREFIX}.Style.HighlightColor";
     private const string FIELD_ID_CURSOR_COLOR = $"{FIELD_ID_PREFIX}.Style.CursorColor";
     private const string FIELD_ID_TITLE_COLOR = $"{FIELD_ID_PREFIX}.Style.TitleColor";
     private const string FIELD_ID_DESCRIPTION_COLOR = $"{FIELD_ID_PREFIX}.Style.DescriptionColor";
+    // Fields related to the custom menu; these update various other parts of the UI.
+    private const string FIELD_ID_CUSTOM_COUNT = $"{FIELD_ID_PREFIX}.Custom.ItemCount";
     // A smaller image, scaled up, would be much, much more efficient to use here.
     // But we can't, because https://github.com/spacechase0/StardewValleyMods/issues/387.
     private const int PREVIEW_SIZE = 400;
@@ -39,6 +43,7 @@ internal class ConfigMenu(
     private readonly Color[] descriptionPreviewData = new Color[PREVIEW_LENGTH];
     // GMCM won't update the actual configuration until it's saved, so we have to store transient
     // values (while editing) from OnFieldChanged in a local lookup.
+    private readonly CustomItemListWidget customItems = new(textureHelper);
     private readonly Dictionary<string, Color> liveColorValues = [];
     // Menu preview is owned by us.
     private Texture2D menuPreview = null!;
@@ -122,7 +127,33 @@ internal class ConfigMenu(
 
     private void AddCustomMenuPage()
     {
+        customItems.Load(Config.CustomMenuItems);
+
         gmcm.AddPage(mod, CUSTOM_MENU_PAGE_ID, () => translations.Get("gmcm.custom"));
+        gmcm.AddParagraph(
+            mod,
+            text: () => translations.Get("gmcm.custom.intro"));
+        gmcm.AddNumberOption(
+            mod,
+            name: () => translations.Get("gmcm.custom.count"),
+            tooltip: () => translations.Get("gmcm.custom.count.tooltip"),
+            fieldId: FIELD_ID_CUSTOM_COUNT,
+            getValue: () => Config.MaxInventoryItems,
+            setValue: value => Config.MaxInventoryItems = value,
+            // Technically the menu could have 0 items, but then we need a bunch of special-case
+            // rendering for our hacked-up custom GMCM UI.
+            min: 1,
+            // Keep this the same as the Inventory max size.
+            max: 24);
+        gmcm.AddComplexOption(
+            mod,
+            name: () => translations.Get("gmcm.custom.items"),
+            draw: customItems.Draw,
+            beforeMenuOpened: () => customItems.Load(Config.CustomMenuItems),
+            afterReset: () => customItems.Load(Config.CustomMenuItems),
+            beforeSave: customItems.Save,
+            height: customItems.GetHeight);
+        gmcm.AddParagraph(mod, () => "Test placeholder");
     }
 
     private void AddStylePage()
@@ -263,6 +294,9 @@ internal class ConfigMenu(
                         liveColorValues[fieldId] = color;
                         UpdateMenuPreview();
                     }
+                    break;
+                case FIELD_ID_CUSTOM_COUNT:
+                    customItems.SetCount((int)value);
                     break;
             }
         });

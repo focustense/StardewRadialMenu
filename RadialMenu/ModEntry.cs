@@ -22,6 +22,7 @@ namespace RadialMenu
         private IReadOnlyList<MenuItem> activeMenuItems = [];
         private Cursor cursor = null!;
         private Painter painter = null!;
+        private TextureHelper textureHelper = null!;
         private KeybindActivator keybindActivator = null!;
         private PreMenuState preMenuState = null!;
         private Action? pendingActivation;
@@ -29,7 +30,8 @@ namespace RadialMenu
         public override void Entry(IModHelper helper)
         {
             config = Helper.ReadConfig<Configuration>();
-            menuItemBuilder = new(helper.GameContent, ActivateCustomMenuItem, Monitor);
+            textureHelper = new(Helper.GameContent, Monitor);
+            menuItemBuilder = new(textureHelper, ActivateCustomMenuItem);
             cursor = new Cursor();
             painter = new(Game1.graphics.GraphicsDevice);
             keybindActivator = new(helper.Input);
@@ -238,6 +240,7 @@ namespace RadialMenu
                 ModManifest,
                 Helper.Translation,
                 Helper.ModContent,
+                textureHelper,
                 () => config);
             configMenu.Setup();
         }
