@@ -23,10 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Gmcm\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="GenericModConfigMenu">
       <HintPath>..\ReferenceLibs\GenericModConfigMenu.dll</HintPath>
     </Reference>
