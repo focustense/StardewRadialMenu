@@ -17,6 +17,7 @@ namespace RadialMenu
         private Configuration config = null!;
         private ConfigMenu? configMenu;
         private IGenericModMenuConfigApi? configMenuApi;
+        private GenericModConfigKeyBindings? gmcmKeybindings;
         private GenericModConfigSync? gmcmSync;
         private MenuItemBuilder menuItemBuilder = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
@@ -199,7 +200,7 @@ namespace RadialMenu
             Monitor.Log("Generic Mod Config Menu is loaded; reading keybindings.", LogLevel.Info);
             try
             {
-                var gmcmKeybindings = GenericModConfigKeyBindings.Load(configMenuApi, Helper.Reflection);
+                gmcmKeybindings = GenericModConfigKeyBindings.Load();
                 Monitor.Log("Finished reading keybindings from GMCM.", LogLevel.Info);
                 if (config.DumpAvailableKeyBindingsOnStartup)
                 {
@@ -237,6 +238,7 @@ namespace RadialMenu
                 save: () => Helper.WriteConfig(config));
             configMenu = new(
                 configMenuApi,
+                gmcmKeybindings,
                 ModManifest,
                 Helper.Translation,
                 Helper.ModContent,

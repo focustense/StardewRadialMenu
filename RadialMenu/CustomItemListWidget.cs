@@ -1,19 +1,28 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
 using StardewValley;
-using StardewValley.Menus;
 
 namespace RadialMenu;
 
 internal class CustomItemListWidget(TextureHelper textureHelper)
 {
+    public event EventHandler<EventArgs> SelectedIndexChanged = null!;
+    public event EventHandler<EventArgs> SelectedIndexChanging = null!;
+
     private record ItemLayout(Texture2D Texture, Rectangle? SourceRect, Rectangle DestinationRect);
 
     private const int ITEM_HEIGHT = 64;
     private const int ITEM_VERTICAL_SPACING = 32;
+    private const int MARGIN_BOTTOM = 16;
+    private const float MAX_ANIMATION_SCALE = 1.1f;
     private const int MAX_COLUMNS = 6;
+    private const int SELECTION_PADDING = 12;
     private const int VERTICAL_OFFSET = 16;
+
+    public int SelectedIndex { get; private set; } = 0;
+    public CustomMenuItemConfiguration SelectedItem => items[SelectedIndex];
 
     private readonly List<CustomMenuItemConfiguration> items = [];
     // Item count is tracked separately from customItems.Count, so we can "remove" items without
@@ -46,15 +55,46 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
             var item = items[i];
             var centerX = (int)position.X + maxItemWidth / 2;
             var (texture, sourceRect, destinationRect) = LayoutItem(item, centerX, position.Y);
-            if (destinationRect.Contains(mousePos))
+            var imageDestinationRect = destinationRect;
+            var hoverTestRect = destinationRect;
+            if (hoverTestRect.Width < ITEM_HEIGHT)
             {
-                var animationScale = GetAnimationScale(i);
-                destinationRect.Inflate(
-                    destinationRect.Width * animationScale * 0.1f,
-                    destinationRect.Height * animationScale * 0.1f);
-                hadMouseOver = true;
+                hoverTestRect.Inflate(ITEM_HEIGHT - hoverTestRect.Width, 0);
             }
-            spriteBatch.Draw(texture, destinationRect, sourceRect, Color.White);
+            if (hoverTestRect.Contains(mousePos))
+            {
+                var animationProgress = GetAnimationProgress(i);
+                var inflationScale = animationProgress * (MAX_ANIMATION_SCALE - 1.0f);
+                imageDestinationRect.Inflate(
+                    imageDestinationRect.Width * inflationScale,
+                    imageDestinationRect.Height * inflationScale);
+                hadMouseOver = true;
+                if (HasLeftClick() && i != SelectedIndex)
+                {
+                    SelectedIndexChanging?.Invoke(this, EventArgs.Empty);
+                    SelectedIndex = i;
+                    // TODO: Play selection sound
+                    SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+            spriteBatch.Draw(texture, imageDestinationRect, sourceRect, Color.White);
+            if (i == SelectedIndex)
+            {
+                var selectionHeight =
+                    (int)(ITEM_HEIGHT * MAX_ANIMATION_SCALE + SELECTION_PADDING * 2);
+                var selectionWidth = (int)(Math.Max(destinationRect.Width, ITEM_HEIGHT)
+                    * MAX_ANIMATION_SCALE
+                    + SELECTION_PADDING * 2);
+                var centerY = (int)position.Y + ITEM_HEIGHT / 2;
+                var borderDestinationRect = new Rectangle(
+                    centerX - selectionWidth / 2,
+                    centerY - selectionHeight / 2,
+                    selectionWidth,
+                    selectionHeight);
+                var borderSourceRect = new Rectangle(64, 192, 64, 64); // Orange-red border
+                spriteBatch.Draw(
+                    Game1.mouseCursors, borderDestinationRect, borderSourceRect, Color.White);
+            }
             col++;
             position.X += maxItemWidth;
         }
@@ -67,7 +107,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         }
     }
 
-    private float GetAnimationScale(int index)
+    private float GetAnimationProgress(int index)
     {
         var gameTime = Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
         var (previousIndex, startTime) = animatedItemIndexAndStartTime;
@@ -97,7 +137,8 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         var rowCount = (int)MathF.Ceiling((float)itemCount / MAX_COLUMNS);
         return labelHeight
             + VERTICAL_OFFSET
-            + ITEM_HEIGHT * rowCount + ITEM_VERTICAL_SPACING * (rowCount - 1);
+            + ITEM_HEIGHT * rowCount + ITEM_VERTICAL_SPACING * (rowCount - 1)
+            + MARGIN_BOTTOM;
     }
 
     public void Load(IReadOnlyList<CustomMenuItemConfiguration> items)
@@ -105,6 +146,11 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         this.items.Clear();
         this.items.AddRange(items);
         itemCount = items.Count;
+        if (itemCount == 0)
+        {
+            SetCount(1);
+        }
+        SelectedIndex = 0;
     }
 
     public void Save()
@@ -113,11 +159,32 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
 
     public void SetCount(int count)
     {
-        var menu = Game1.activeClickableMenu is TitleMenu ? TitleMenu.subMenu : Game1.activeClickableMenu;
         itemCount = count;
         while (items.Count < itemCount)
         {
             items.Add(new());
         }
+    }
+
+    // GMCM checks oldMouseState and oldPadState instead of tracking directly, but it doesn't seem
+    // to work here; the old state is always the same as the current state and there is never a
+    // frame when the button is pressed but "old" state was released.
+    private bool wasLeftMouseButtonPressed = false;
+    private bool wasPadAButtonPressed = false;
+
+    private bool HasLeftClick()
+    {
+        var isLeftMouseButtonPressed =
+            Game1.input.GetMouseState().LeftButton == ButtonState.Pressed;
+        var isPadAButtonPressed = Game1.input.GetGamePadState().IsButtonDown(Buttons.A);
+
+        var result =
+            (isLeftMouseButtonPressed && !wasLeftMouseButtonPressed)
+            || (isPadAButtonPressed && !wasPadAButtonPressed);
+
+        wasLeftMouseButtonPressed = isLeftMouseButtonPressed;
+        wasPadAButtonPressed = isPadAButtonPressed;
+
+        return result;
     }
 }

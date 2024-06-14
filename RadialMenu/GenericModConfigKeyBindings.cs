@@ -1,4 +1,6 @@
-﻿using StardewModdingAPI;
+﻿using GenericModConfigMenu.Framework;
+using GenericModConfigMenu.Framework.ModOption;
+using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using System.Collections;
 using System.Text;
@@ -41,103 +43,57 @@ namespace RadialMenu
             return GetCurrentBinding().SequenceEqual(otherBinding);
         }
 
-        public bool MatchesBinding(Keybind otherBinding)
+        public bool MatchesBinding(Keybind? otherBinding)
         {
-            return MatchesBinding(otherBinding.Buttons);
+            return otherBinding is not null && MatchesBinding(otherBinding.Buttons);
         }
     }
 
     internal class GenericModConfigKeyBindings
     {
-        public static GenericModConfigKeyBindings Load(
-            IGenericModMenuConfigApi configMenu, IReflectionHelper reflectionHelper)
+        public static GenericModConfigKeyBindings Load()
         {
-            // The only source for this data is in GMCM's ModConfigManager, but virtually everything
-            // in the mod is internal except for the specific APIs we use to register our _own_
-            // config options. So we have to use a whole lot of reflection, and this could easily
-            // fail if GMCM updates.
-            // Perhaps a future version will open up some of the API.
-            var realConfigMenu = reflectionHelper
-                    .GetField<object>(configMenu, "__Target")
-                    .GetValue();
-            var configManager = reflectionHelper
-                .GetField<object>(realConfigMenu, "ConfigManager")
-                .GetValue();
-            var modConfigs = reflectionHelper
-                .GetMethod(configManager, "GetAll")
-                .Invoke<IEnumerable<object>>();
             var allOptions = new List<GenericModConfigKeybindOption>();
-            foreach (var modConfig in modConfigs)
+            foreach (var modConfig in GenericModConfigMenu.Mod.instance.ConfigManager.GetAll())
             {
-                var manifest = reflectionHelper
-                    .GetProperty<IManifest>(modConfig, "ModManifest")
-                    .GetValue();
-                var pages = reflectionHelper
-                    .GetProperty<IDictionary>(modConfig, "Pages")
-                    .GetValue();
-                foreach (var page in pages.Values)
+                foreach (var page in modConfig.Pages.Values)
                 {
-                    var getPageTitle = reflectionHelper
-                        .GetProperty<Func<string>>(page, "PageTitle")
-                        .GetValue();
-                    var options = reflectionHelper
-                        .GetProperty<IList>(page, "Options")
-                        .GetValue()
-                        .Cast<object>();
                     Func<string> getSectionTitle = () => "";
-                    foreach (var option in options)
+                    foreach (var option in page.Options)
                     {
-                        if (option.GetType().Name == "SectionTitleModOption")
+                        if (option is SectionTitleModOption sectionTitle)
                         {
-                            getSectionTitle = reflectionHelper
-                                .GetProperty<Func<string>>(option, "Name")
-                                .GetValue();
-                            continue;
+                            getSectionTitle = sectionTitle.Name;
                         }
-                        else if (!IsKeybindOption(option))
+                        Func<IEnumerable<SButton>>? getValue = option switch
                         {
-                            continue;
-                        }
-                        var fieldId = reflectionHelper
-                            .GetProperty<string>(option, "FieldId")
-                            .GetValue();
-                        var getFieldName = reflectionHelper
-                            .GetProperty<Func<string>>(option, "Name")
-                            .GetValue();
-                        var getTooltip = reflectionHelper
-                            .GetProperty<Func<string>>(option, "Tooltip")
-                            .GetValue();
-                        var type = reflectionHelper
-                            .GetProperty<Type>(option, "Type")
-                            .GetValue();
-                        Func<IEnumerable<SButton>> getValue = type.Name switch
-                        {
-                            "SButton" => () =>
-                                [reflectionHelper.GetProperty<SButton>(option, "Value").GetValue()],
-                            "KeybindList" => () =>
-                                reflectionHelper
-                                    .GetProperty<KeybindList>(option, "Value")
-                                    .GetValue()
-                                    .Keybinds
-                                    .Where(kb => kb.IsBound)
-                                    .FirstOrDefault()?
-                                    .Buttons ?? [],
-                            _ => () => []
+                            SimpleModOption<SButton> buttonOption => () => [buttonOption.GetValue()],
+                            SimpleModOption<KeybindList> keybindListOption => () => keybindListOption
+                                .GetValue()?
+                                .Keybinds
+                                .Where(kb => kb.IsBound)
+                                .FirstOrDefault()?
+                                .Buttons ?? [],
+                            _ => null
                         };
-                        allOptions.Add(new(
-                            manifest,
-                            fieldId,
-                            getPageTitle,
-                            getSectionTitle,
-                            getFieldName,
-                            getTooltip,
-                            getValue));
+                        if (getValue is not null)
+                        {
+                            allOptions.Add(new(
+                                modConfig.ModManifest,
+                                option.FieldId,
+                                page.PageTitle,
+                                getSectionTitle,
+                                option.Name,
+                                option.Tooltip,
+                                getValue));
+                        }
                     }
                 }
             }
             return new(allOptions);
         }
 
+        public IReadOnlyDictionary<string, IManifest> AllMods { get; }
         public IReadOnlyList<GenericModConfigKeybindOption> AllOptions { get; }
 
         private readonly ILookup<(string, string), GenericModConfigKeybindOption>
@@ -149,6 +105,11 @@ namespace RadialMenu
         private GenericModConfigKeyBindings(IReadOnlyList<GenericModConfigKeybindOption> allOptions)
         {
             AllOptions = allOptions;
+            AllMods = allOptions
+                .Select(opt => opt.ModManifest)
+                .DistinctBy(mod => mod.UniqueID)
+                .OrderBy(mod => mod.Name)
+                .ToDictionary(mod => mod.UniqueID);
             optionsByModAndFieldId = allOptions.ToDictionary(
                 opt => (opt.ModManifest.UniqueID, opt.FieldId));
             optionsByModAndFieldName = allOptions.ToLookup(
@@ -156,7 +117,7 @@ namespace RadialMenu
         }
 
         public GenericModConfigKeybindOption? Find(
-            string modId, string fieldId, string fieldName, Keybind previousBinding)
+            string modId, string fieldId, string fieldName = "", Keybind? previousBinding = null)
         {
             var nameMatches = optionsByModAndFieldName[(modId, fieldName)];
             GenericModConfigKeybindOption? bestNameMatch = null;
@@ -202,17 +163,6 @@ namespace RadialMenu
         private static ILookup<TKey, TElement> EmptyLookup<TKey, TElement>()
         {
             return Enumerable.Empty<TKey>().ToLookup(key => key, _ => default(TElement)!);
-        }
-
-        private static bool IsKeybindOption(object option)
-        {
-            var optionType = option.GetType();
-            if (!optionType.IsGenericType || optionType.Name != "SimpleModOption`1")
-            {
-                return false;
-            }
-            var valueType = optionType.GetGenericArguments()[0];
-            return valueType == typeof(SButton) || valueType == typeof(KeybindList);
         }
     }
 }

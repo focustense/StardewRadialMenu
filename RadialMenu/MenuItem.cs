@@ -26,6 +26,10 @@ namespace RadialMenu
             if (!spriteCache.TryGetValue(cacheKey, out var sprite))
             {
                 sprite = textureHelper.GetSprite(item.SpriteSourceFormat, item.SpriteSourcePath);
+                // TODO: Sprite can actually be null here and it will cause an exception if it is.
+                // Actual spec should be that TextureHelper never returns null - it should fall back
+                // to monogram and then maybe to some empty 1x1 texture or blank spot on one of the
+                // built-in sprite sheets.
                 spriteCache.TryAdd(cacheKey, sprite);
             }
             return new(

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>RadialMenu</AssemblyName>
     <RootNamespace>RadialMenu</RootNamespace>
@@ -10,7 +10,25 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Krafs.Publicizer" Version="2.2.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Publicize Include="GenericModConfigMenu" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Gmcm\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GenericModConfigMenu">
+      <HintPath>..\ReferenceLibs\GenericModConfigMenu.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
