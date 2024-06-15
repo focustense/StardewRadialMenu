@@ -1,11 +1,11 @@
 ﻿using RadialMenu.Config;
 using StardewModdingAPI;
 
-namespace RadialMenu
+namespace RadialMenu.Gmcm
 {
     internal class GenericModConfigSync(
         Func<Configuration> getConfig,
-        GenericModConfigKeyBindings bindings,
+        GenericModConfigKeybindings bindings,
         IMonitor monitor)
     {
         public void Sync(CustomMenuItemConfiguration item)

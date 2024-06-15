@@ -2,13 +2,45 @@
 using StardewValley.Menus;
 using StardewValley;
 using System.Diagnostics.CodeAnalysis;
+using GenericModConfigMenu.Framework.ModOption;
+using SpaceShared.UI;
 
 namespace RadialMenu.Gmcm;
 
 // Collection of scary, fragile methods that depend on GMCM/SpaceCore internals and are at severe
 // risk of breakage due to mod updates, but that we nevertheless can't live without.
-internal class UiInternals
+internal static class UiInternals
 {
+    public static BaseModOption? ForceResetOption(this ModConfigPage page, string fieldId)
+    {
+        var option = page.Options.FirstOrDefault(opt => opt.FieldId == fieldId);
+        option?.AfterReset();
+        return option;
+    }
+
+    public static void ForceSaveOption(this ModConfigPage page, string fieldId)
+    {
+        page.Options
+            .FirstOrDefault(opt => opt.FieldId == fieldId)?
+            .BeforeSave();
+    }
+    public static void ForceUpdateElement<T>(
+        this SpecificModConfigMenu menu, int childIndex, Action<T> update)
+        where T : Element
+    {
+        ForceUpdateElement(menu.Table, childIndex, update);
+    }
+
+    public static void ForceUpdateElement<T>(this Table table, int childIndex, Action<T> update)
+        where T : Element
+    {
+        var element = table.Children.Length > childIndex ? table.Children[childIndex] : null;
+        if (element is T typedElement)
+        {
+            update(typedElement);
+        }
+    }
+
     public static bool TryGetModConfigMenu([MaybeNullWhen(false)] out SpecificModConfigMenu menu)
     {
         // GMCM uses this to get the SpecificModConfigMenu, which is where the options are stored.

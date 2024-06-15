@@ -4,7 +4,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 
-namespace RadialMenu;
+namespace RadialMenu.Gmcm;
 
 /// <summary>The API which lets other mods add a config UI through Generic Mod Config Menu.</summary>
 /// <remarks>Source: StardewValleyMods/GenericModConfigMenu/IGenericModConfigMenuApi.cs</remarks>

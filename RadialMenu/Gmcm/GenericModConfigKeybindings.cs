@@ -1,11 +1,9 @@
-﻿using GenericModConfigMenu.Framework;
-using GenericModConfigMenu.Framework.ModOption;
+﻿using GenericModConfigMenu.Framework.ModOption;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
-using System.Collections;
 using System.Text;
 
-namespace RadialMenu
+namespace RadialMenu.Gmcm
 {
     internal record GenericModConfigKeybindOption(
         IManifest ModManifest,
@@ -49,9 +47,9 @@ namespace RadialMenu
         }
     }
 
-    internal class GenericModConfigKeyBindings
+    internal class GenericModConfigKeybindings
     {
-        public static GenericModConfigKeyBindings Load()
+        public static GenericModConfigKeybindings Load()
         {
             var allOptions = new List<GenericModConfigKeybindOption>();
             foreach (var modConfig in GenericModConfigMenu.Mod.instance.ConfigManager.GetAll())
@@ -102,7 +100,7 @@ namespace RadialMenu
         private readonly Dictionary<(string, string), GenericModConfigKeybindOption>
             optionsByModAndFieldId = [];
 
-        private GenericModConfigKeyBindings(IReadOnlyList<GenericModConfigKeybindOption> allOptions)
+        private GenericModConfigKeybindings(IReadOnlyList<GenericModConfigKeybindOption> allOptions)
         {
             AllOptions = allOptions;
             AllMods = allOptions
@@ -130,8 +128,8 @@ namespace RadialMenu
                         bestNameMatch = nameMatch;
                     }
                     else if (nameMatch.FieldId == fieldId
-                        || (!bestNameMatch.MatchesBinding(previousBinding)
-                            && nameMatch.MatchesBinding(previousBinding)))
+                        || !bestNameMatch.MatchesBinding(previousBinding)
+                            && nameMatch.MatchesBinding(previousBinding))
                     {
                         bestNameMatch = nameMatch;
                         break;

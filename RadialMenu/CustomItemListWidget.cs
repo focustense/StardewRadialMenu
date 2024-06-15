@@ -21,6 +21,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
     private const int SELECTION_PADDING = 12;
     private const int VERTICAL_OFFSET = 16;
 
+    public IReadOnlyList<CustomMenuItemConfiguration> Items => items;
     public int SelectedIndex { get; private set; } = 0;
     public CustomMenuItemConfiguration SelectedItem => items[SelectedIndex];
 
@@ -107,6 +108,47 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         }
     }
 
+    public int GetHeight()
+    {
+        var labelHeight = (int)Game1.dialogueFont.MeasureString("A").Y;
+        var rowCount = (int)MathF.Ceiling((float)itemCount / MAX_COLUMNS);
+        return labelHeight
+            + VERTICAL_OFFSET
+            + ITEM_HEIGHT * rowCount + ITEM_VERTICAL_SPACING * (rowCount - 1)
+            + MARGIN_BOTTOM;
+    }
+
+    public void Load(IReadOnlyList<CustomMenuItemConfiguration> items)
+    {
+        this.items.Clear();
+        this.items.AddRange(items);
+        itemCount = items.Count;
+        if (itemCount == 0)
+        {
+            SetCount(1);
+        }
+        SelectedIndex = 0;
+    }
+
+    // We don't have a Save method because it's not a very useful API compared to having callers
+    // reference the actual Items and copy it.
+    //
+    // Since the widget is part of a "real-time" editor, rather than trying to sync with a master
+    // configuration list (which isn't supposed to happen until the user saves anyway), the owner
+    // of this widget can simply use its Items/SelectedItem as the main data source for subsequent
+    // editing UI.
+
+    public void SetCount(int count)
+    {
+        itemCount = count;
+        while (items.Count < itemCount)
+        {
+            items.Add(new());
+        }
+    }
+
+    /* ----- Layout and Drawing ----- */
+
     private float GetAnimationProgress(int index)
     {
         var gameTime = Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
@@ -131,40 +173,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         return new(sprite.Texture, sprite.SourceRect, destinationRect);
     }
 
-    public int GetHeight()
-    {
-        var labelHeight = (int)Game1.dialogueFont.MeasureString("A").Y;
-        var rowCount = (int)MathF.Ceiling((float)itemCount / MAX_COLUMNS);
-        return labelHeight
-            + VERTICAL_OFFSET
-            + ITEM_HEIGHT * rowCount + ITEM_VERTICAL_SPACING * (rowCount - 1)
-            + MARGIN_BOTTOM;
-    }
-
-    public void Load(IReadOnlyList<CustomMenuItemConfiguration> items)
-    {
-        this.items.Clear();
-        this.items.AddRange(items);
-        itemCount = items.Count;
-        if (itemCount == 0)
-        {
-            SetCount(1);
-        }
-        SelectedIndex = 0;
-    }
-
-    public void Save()
-    {
-    }
-
-    public void SetCount(int count)
-    {
-        itemCount = count;
-        while (items.Count < itemCount)
-        {
-            items.Add(new());
-        }
-    }
+    /* ----- Interaction ----- */
 
     // GMCM checks oldMouseState and oldPadState instead of tracking directly, but it doesn't seem
     // to work here; the old state is always the same as the current state and there is never a

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
+using RadialMenu.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -17,7 +18,7 @@ namespace RadialMenu
         private Configuration config = null!;
         private ConfigMenu? configMenu;
         private IGenericModMenuConfigApi? configMenuApi;
-        private GenericModConfigKeyBindings? gmcmKeybindings;
+        private GenericModConfigKeybindings? gmcmKeybindings;
         private GenericModConfigSync? gmcmSync;
         private MenuItemBuilder menuItemBuilder = null!;
         private IReadOnlyList<MenuItem> activeMenuItems = [];
@@ -200,7 +201,7 @@ namespace RadialMenu
             Monitor.Log("Generic Mod Config Menu is loaded; reading keybindings.", LogLevel.Info);
             try
             {
-                gmcmKeybindings = GenericModConfigKeyBindings.Load();
+                gmcmKeybindings = GenericModConfigKeybindings.Load();
                 Monitor.Log("Finished reading keybindings from GMCM.", LogLevel.Info);
                 if (config.DumpAvailableKeyBindingsOnStartup)
                 {
