@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
 using StardewValley;
 
-namespace RadialMenu;
+namespace RadialMenu.Gmcm;
 
 internal class CustomItemListWidget(TextureHelper textureHelper)
 {
@@ -188,8 +188,8 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         var isPadAButtonPressed = Game1.input.GetGamePadState().IsButtonDown(Buttons.A);
 
         var result =
-            (isLeftMouseButtonPressed && !wasLeftMouseButtonPressed)
-            || (isPadAButtonPressed && !wasPadAButtonPressed);
+            isLeftMouseButtonPressed && !wasLeftMouseButtonPressed
+            || isPadAButtonPressed && !wasPadAButtonPressed;
 
         wasLeftMouseButtonPressed = isLeftMouseButtonPressed;
         wasPadAButtonPressed = isPadAButtonPressed;

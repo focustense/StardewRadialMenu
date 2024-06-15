@@ -1,8 +1,7 @@
 ﻿using RadialMenu.Config;
-using RadialMenu.Gmcm;
 using StardewModdingAPI;
 
-namespace RadialMenu;
+namespace RadialMenu.Gmcm;
 
 internal class ConfigMenu(
     IGenericModMenuConfigApi gmcm,
