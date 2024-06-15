@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
 using StardewValley;
 
@@ -8,8 +7,8 @@ namespace RadialMenu.Gmcm;
 
 internal class CustomItemListWidget(TextureHelper textureHelper)
 {
-    public event EventHandler<EventArgs> SelectedIndexChanged = null!;
-    public event EventHandler<EventArgs> SelectedIndexChanging = null!;
+    public event EventHandler<EventArgs>? SelectedIndexChanged;
+    public event EventHandler<EventArgs>? SelectedIndexChanging;
 
     private record ItemLayout(Texture2D Texture, Rectangle? SourceRect, Rectangle DestinationRect);
 
@@ -25,6 +24,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
     public int SelectedIndex { get; private set; } = 0;
     public CustomMenuItemConfiguration SelectedItem => items[SelectedIndex];
 
+    private readonly ClickDetector clickDetector = new();
     private readonly List<CustomMenuItemConfiguration> items = [];
     // Item count is tracked separately from customItems.Count, so we can "remove" items without
     // losing their data. This way, if the player lowers the count and raises it again, the old
@@ -70,7 +70,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
                     imageDestinationRect.Width * inflationScale,
                     imageDestinationRect.Height * inflationScale);
                 hadMouseOver = true;
-                if (HasLeftClick() && i != SelectedIndex)
+                if (clickDetector.HasLeftClick() && i != SelectedIndex)
                 {
                     SelectedIndexChanging?.Invoke(this, EventArgs.Empty);
                     SelectedIndex = i;
@@ -171,29 +171,5 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         var destinationRect = new Rectangle(
             (int)MathF.Round(centerX - itemWidth / 2), (int)topY, (int)itemWidth, ITEM_HEIGHT);
         return new(sprite.Texture, sprite.SourceRect, destinationRect);
-    }
-
-    /* ----- Interaction ----- */
-
-    // GMCM checks oldMouseState and oldPadState instead of tracking directly, but it doesn't seem
-    // to work here; the old state is always the same as the current state and there is never a
-    // frame when the button is pressed but "old" state was released.
-    private bool wasLeftMouseButtonPressed = false;
-    private bool wasPadAButtonPressed = false;
-
-    private bool HasLeftClick()
-    {
-        var isLeftMouseButtonPressed =
-            Game1.input.GetMouseState().LeftButton == ButtonState.Pressed;
-        var isPadAButtonPressed = Game1.input.GetGamePadState().IsButtonDown(Buttons.A);
-
-        var result =
-            isLeftMouseButtonPressed && !wasLeftMouseButtonPressed
-            || isPadAButtonPressed && !wasPadAButtonPressed;
-
-        wasLeftMouseButtonPressed = isLeftMouseButtonPressed;
-        wasPadAButtonPressed = isPadAButtonPressed;
-
-        return result;
     }
 }
