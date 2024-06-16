@@ -24,13 +24,21 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         get { return selectedItemId; }
         set
         {
-            if (value != selectedItemId)
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                selectedItemId = GetFirstItemForCategory(0);
+            }
+            else if (value != selectedItemId)
             {
                 selectedItemId = value;
-                SelectedCategoryId =
-                    ItemRegistry.GetMetadata(value)?.TypeIdentifier ?? CategoryIds.First();
-                SelectedItemChanged?.Invoke(this, EventArgs.Empty);
             }
+            else
+            {
+                return;
+            }
+            SelectedCategoryId =
+                ItemRegistry.GetMetadata(value)?.TypeIdentifier ?? CategoryIds.First();
+            SelectedItemChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -183,6 +191,23 @@ internal class IconSelectorWidget(ITranslationHelper translations)
             .Default(translations.Get("itemcategory.unknown", new { id }));
     }
 
+    private static string GetFirstItemForCategory(string categoryId)
+    {
+        int categoryIndex = CategoryIds
+            .Select((id, index) => (id, index))
+            .Where(x => x.id == categoryId)
+            .Select(x => x.index)
+            .FirstOrDefault();
+        return GetFirstItemForCategory(categoryIndex);
+    }
+
+    private static string GetFirstItemForCategory(int categoryIndex)
+    {
+        var category = ItemRegistry.ItemTypes[categoryIndex];
+        var nextItemId = category.GetAllIds().FirstOrDefault() ?? "";
+        return ItemRegistry.ManuallyQualifyItemId(nextItemId, category.Identifier);
+    }
+
     private int GetMaxCategoryTextWidth()
     {
         if (maxCategoryTextWidth == 0)
@@ -220,8 +245,7 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         var categoryIndex = categoryIds.IndexOf(selectedCategoryId);
         var nextIndex = (categoryIndex + offset + categoryIds.Count) % categoryIds.Count;
         SelectedCategoryId = categoryIds[nextIndex];
-        var nextItemId = ItemRegistry.ItemTypes[nextIndex].GetAllIds().FirstOrDefault() ?? "";
-        SelectedItemId = ItemRegistry.ManuallyQualifyItemId(nextItemId, SelectedCategoryId);
+        SelectedItemId = GetFirstItemForCategory(nextIndex);
     }
 
     private void MoveSelectedImage(int offset)

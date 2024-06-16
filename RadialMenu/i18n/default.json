@@ -35,6 +35,8 @@
   "gmcm.custom.count.tooltip": "Number of items that will show up in the custom menu. You'll have to configure these items below, in order for them to display a unique icon or do anything useful.",
   "gmcm.custom.items": "Items (Click to Edit)",
   "gmcm.custom.item.properties": "Shortcut #{{index}}",
+  "gmcm.custom.item.default.name": "Unnamed Shortcut",
+  "gmcm.custom.item.default.namewithbinding": "Unnamed Shortcut ({{binding}})",
   "gmcm.custom.item.name": "Title",
   "gmcm.custom.item.name.tooltip": "Title text to display in the preview area (inner circle) when this item is selected.",
   "gmcm.custom.item.description": "Description",

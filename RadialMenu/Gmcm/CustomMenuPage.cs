@@ -12,6 +12,7 @@ namespace RadialMenu.Gmcm;
 internal class CustomMenuPage(
     IGenericModMenuConfigApi gmcm,
     GenericModConfigKeybindings? gmcmBindings,
+    GenericModConfigSync? gmcmSync,
     IManifest mod,
     ITranslationHelper translations,
     TextureHelper textureHelper,
@@ -40,6 +41,7 @@ internal class CustomMenuPage(
 
     private readonly IGenericModMenuConfigApi gmcm = gmcm;
     private readonly GenericModConfigKeybindings? gmcmBindings = gmcmBindings;
+    private readonly GenericModConfigSync? gmcmSync = gmcmSync;
     private readonly RegistrationHelper reg = new(gmcm, mod);
     private readonly IManifest mod = mod;
     private readonly ITranslationHelper translations = translations;
@@ -75,7 +77,7 @@ internal class CustomMenuPage(
     {
         gameLoopEvents.UpdateTicked += GameLoopEvents_UpdateTicked;
 
-        itemList.Load(Config.CustomMenuItems);
+        itemList.Load(Config.CustomMenuItems.Select(item => item.Clone()));
         itemList.SelectedIndexChanged += ItemList_SelectedIndexChanged;
         itemList.SelectedIndexChanging += ItemList_SelectedIndexChanging;
 
@@ -98,8 +100,10 @@ internal class CustomMenuPage(
             name: () => translations.Get("gmcm.custom.count"),
             tooltip: () => translations.Get("gmcm.custom.count.tooltip"),
             fieldId: FIELD_ID_COUNT,
-            getValue: () => Config.MaxInventoryItems,
-            setValue: value => Config.MaxInventoryItems = value,
+            getValue: () => Math.Max(Config.CustomMenuItems.Count, 0),
+            // Changing the item count is handled by the various instant-update mechanisms. Setting
+            // it here (e.g. on save) would only serve to undo the sanitization.
+            setValue: _ => { },
             // Technically the menu could have 0 items, but then we'd need a bunch of special-case
             // rendering for our hacked-up custom GMCM UI. Requiring at least one item means we can
             // always display the edit fields without inconsistency.
@@ -116,10 +120,13 @@ internal class CustomMenuPage(
             beforeMenuOpened: () =>
             {
                 isLateLoadFinished = false;
-                itemList.Load(Config.CustomMenuItems);
+                itemList.Load(Config.CustomMenuItems.Select(item => item.Clone()));
             },
             afterReset: () => itemList.Load(Config.CustomMenuItems),
-            beforeSave: () => Config.CustomMenuItems = new(itemList.Items),
+            beforeSave: () => Config.CustomMenuItems = new(itemList.VisibleItems),
+            // We do the sanitization pass in afterSave to ensure that all other controls have had a
+            // chance to save their values, because not all of them post immediate updates.
+            afterSave: () => Config.CustomMenuItems = SanitizeItems(Config.CustomMenuItems).ToList(),
             height: itemList.GetHeight);
         reg.AddSectionTitle(
             text: () => string.Format(
@@ -210,7 +217,7 @@ internal class CustomMenuPage(
         {
             reg.AddSectionTitle(() => translations.Get("gmcm.custom.item.gmcm"));
             reg.AddParagraph(() => translations.Get("gmcm.custom.item.gmcm.note"));
-            gmcmFilterModId = itemList.SelectedItem?.Gmcm?.ModId ?? "";
+            gmcmFilterModId = itemList.SelectedItem.Gmcm?.ModId ?? "";
             reg.AddTextOption(
                 name: () => translations.Get("gmcm.custom.item.gmcm.mod"),
                 tooltip: () => translations.Get("gmcm.custom.item.gmcm.mod.tooltip"),
@@ -227,7 +234,7 @@ internal class CustomMenuPage(
                 name: () => translations.Get("gmcm.custom.item.gmcm.action"),
                 tooltip: () => translations.Get("gmcm.custom.item.gmcm.action.tooltip"),
                 fieldId: FIELD_ID_GMCM_KEYBIND,
-                getValue: () => GetGmcmAssociationId(itemList.SelectedItem?.Gmcm),
+                getValue: () => GetGmcmAssociationId(itemList.SelectedItem.Gmcm),
                 setValue: value => itemList.SelectedItem!.Gmcm = ResolveGmcmAssociation(
                     value,
                     itemList.SelectedItem.Gmcm?.UseCustomName ?? false),
@@ -247,11 +254,11 @@ internal class CustomMenuPage(
                 name: () => translations.Get("gmcm.custom.item.gmcm.override"),
                 tooltip: () => translations.Get("gmcm.custom.item.gmcm.override.tooltip"),
                 fieldId: FIELD_ID_GMCM_OVERRIDE,
-                getValue: () => itemList.SelectedItem?.Gmcm?.UseCustomName ?? false,
+                getValue: () => itemList.SelectedItem.Gmcm?.UseCustomName ?? false,
                 setValue: value =>
                 {
                     isGmcmTitleOverrideEnabled = value;
-                    if (itemList.SelectedItem?.Gmcm is GmcmAssociation association)
+                    if (itemList.SelectedItem.Gmcm is GmcmAssociation association)
                     {
                         association.UseCustomName = value;
                     }
@@ -266,10 +273,12 @@ internal class CustomMenuPage(
                     itemList.SetCount((int)value);
                     break;
                 case FIELD_ID_IMAGE_TYPE:
-                    // TODO: Update UI to reflect current setting.
+                    itemList.SelectedItem.SpriteSourceFormat =
+                        Enum.Parse<SpriteSourceFormat>((string)value);
+                    ForceUpdateSelectedItemImageProperties();
                     break;
                 case FIELD_ID_IMAGE_ITEM_ID:
-                    if (itemList.SelectedItem?.SpriteSourceFormat == SpriteSourceFormat.ItemIcon)
+                    if (itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.ItemIcon)
                     {
                         iconSelector.SelectedItemId = (string)value;
                     }
@@ -295,12 +304,24 @@ internal class CustomMenuPage(
                     }
                     break;
                 case FIELD_ID_GMCM_KEYBIND:
-                    itemList.SelectedItem!.Gmcm =
-                        ResolveGmcmAssociation((string)value, isGmcmTitleOverrideEnabled);
+                    var newGmcm = ResolveGmcmAssociation((string)value, isGmcmTitleOverrideEnabled);
+                    itemList.SelectedItem.Gmcm = newGmcm;
+                    gmcmSync?.Sync(itemList.SelectedItem);
+                    if (gmcmSync is not null
+                        && newGmcm is not null
+                        && UiInternals.TryGetModConfigMenuAndPage(out menu, out page))
+                    {
+                        if (!newGmcm.UseCustomName)
+                        {
+                            ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
+                            ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
+                        }
+                        ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
+                    }
                     break;
                 case FIELD_ID_GMCM_OVERRIDE:
                     isGmcmTitleOverrideEnabled = (bool)value;
-                    if (itemList.SelectedItem?.Gmcm is GmcmAssociation association)
+                    if (itemList.SelectedItem.Gmcm is GmcmAssociation association)
                     {
                         association.UseCustomName = (bool)value;
                     }
@@ -318,7 +339,7 @@ internal class CustomMenuPage(
 
     private void IconSelector_SelectedItemChanged(object? sender, EventArgs e)
     {
-        if (itemList.SelectedItem?.SpriteSourceFormat == SpriteSourceFormat.ItemIcon)
+        if (itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.ItemIcon)
         {
             itemList.SelectedItem.SpriteSourcePath = iconSelector.SelectedItemId;
             if (UiInternals.TryGetModConfigMenuAndPage(out var menu, out var page, ID))
@@ -371,6 +392,35 @@ internal class CustomMenuPage(
         isLateLoadFinished = true;
     }
 
+    private IEnumerable<CustomMenuItemConfiguration> SanitizeItems(
+        IEnumerable<CustomMenuItemConfiguration> items)
+    {
+        return items
+            .Where(item => !item.IsEmpty())
+            .Select(item =>
+            {
+                item = item.Clone();
+
+                // If GMCM info is available, use it to populate any missing info; and just this
+                // once, replace the name/description regardless of the "custom name" option if the
+                // name is missing.
+                // (In other words, if user didn't bother to enter a name, and we can get the name
+                // from the GMCM association, then always do so to avoid a blank name.)
+                gmcmSync?.Sync(item, string.IsNullOrEmpty(item.Name));
+
+                if (string.IsNullOrEmpty(item.Name))
+                {
+                    item.Name = item.Keybind.IsBound
+                        ? translations.Get(
+                            "gmcm.custom.item.default.namewithbinding",
+                            new { binding = item.Keybind })
+                        : translations.Get("gmcm.custom.item.default.name");
+                }
+
+                return item;
+            });
+    }
+
     /* ----- Sprite/image utilities ----- */
 
     // Rectangle.ToString() has a format that's not suitable for our purposes.
@@ -385,7 +435,7 @@ internal class CustomMenuPage(
         customImagePreview.SourceRect = null;
 
         var formattedPath = $"{selectedSpriteAssetPath}:({selectedSpriteTextureRect})";
-        if (TextureSegmentPath.TryParse(formattedPath, out var textureSegment))
+        if (TextureSegmentPath.TryParse(formattedPath, out var _))
         {
             itemList.SelectedItem.SpriteSourcePath = formattedPath;
             var sprite = textureHelper.GetSprite(SpriteSourceFormat.TextureSegment, formattedPath);
@@ -409,6 +459,8 @@ internal class CustomMenuPage(
         page.ForceSaveOption(FIELD_ID_DESCRIPTION);
         page.ForceSaveOption(FIELD_ID_KEYBIND);
         page.ForceSaveOption(FIELD_ID_IMAGE_TYPE);
+        // Asset path and source rect (for non-item-based images) are local state and synced from
+        // the OnFieldChanged handler, so there's no need to save those explicitly.
         page.ForceSaveOption(FIELD_ID_IMAGE_ITEM_ID);
         // We don't need to save the CUSTOM_GMCM_MOD here, it's just local state.
         page.ForceSaveOption(FIELD_ID_GMCM_KEYBIND);
@@ -419,10 +471,41 @@ internal class CustomMenuPage(
     {
         actionOnGameUpdate = ForceUpdateSelectedItemPropertiesLate;
 
+        isGmcmTitleOverrideEnabled = itemList.SelectedItem.Gmcm?.UseCustomName ?? false;
+        ForceUpdateSelectedItemImageProperties();
+        if (!UiInternals.TryGetModConfigMenuAndPage(out var menu, out var page, ID))
+        {
+            return;
+        }
+        menu.ForceUpdateElement<Label>(
+            reg.GetTablePosition(FIELD_ID_NAME) - 1,
+            label => label.String = translations.Get(
+                "gmcm.custom.item.properties",
+                new { index = itemList.SelectedIndex + 1 }));
+        ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
+        ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
+        ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
+        if (gmcmBindings is not null)
+        {
+            gmcmFilterModId = itemList.SelectedItem.Gmcm?.ModId ?? "";
+            ForceUpdateDropdown(page, menu, FIELD_ID_GMCM_MOD);
+            ForceUpdateDropdown(
+                page, menu, FIELD_ID_GMCM_KEYBIND, getChoices: GetFilteredGmcmBindingChoices);
+            if (ForceUpdateCheckbox(page, menu, FIELD_ID_GMCM_OVERRIDE))
+            {
+                ForceUpdateGmcmSyncDescription();
+            }
+        }
+    }
+
+    private void ForceUpdateSelectedItemImageProperties()
+    {
+        actionOnGameUpdate = ForceUpdateSelectedItemPropertiesLate;
+
         var isCustomImage =
             itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.TextureSegment;
         iconSelector.SelectedItemId = !isCustomImage ? itemList.SelectedItem.SpriteSourcePath : "";
-        if (itemList.SelectedItem?.TryGetTextureSegment(out var textureSegment) ?? false)
+        if (itemList.SelectedItem.TryGetTextureSegment(out var textureSegment))
         {
             selectedSpriteAssetPath = textureSegment.AssetPath;
             selectedSpriteTextureRect = RectToString(textureSegment.SourceRect);
@@ -438,29 +521,10 @@ internal class CustomMenuPage(
         {
             return;
         }
-        menu.ForceUpdateElement<Label>(
-            reg.GetTablePosition(FIELD_ID_NAME) - 1,
-            label => label.String = translations.Get(
-                "gmcm.custom.item.properties",
-                new { index = itemList.SelectedIndex + 1 }));
-        ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
-        ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
-        ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
         ForceUpdateDropdown(page, menu, FIELD_ID_IMAGE_TYPE);
         ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_ITEM_ID);
         ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_ASSET_PATH);
         ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_SOURCE_RECT);
-        if (gmcmBindings is not null)
-        {
-            gmcmFilterModId = itemList.SelectedItem?.Gmcm?.ModId ?? "";
-            ForceUpdateDropdown(page, menu, FIELD_ID_GMCM_MOD);
-            ForceUpdateDropdown(
-                page, menu, FIELD_ID_GMCM_KEYBIND, getChoices: GetFilteredGmcmBindingChoices);
-            if (ForceUpdateCheckbox(page, menu, FIELD_ID_GMCM_OVERRIDE))
-            {
-                ForceUpdateGmcmSyncDescription();
-            }
-        }
     }
 
     // These should run on every sync, but aren't safe to run from within Draw.
@@ -498,7 +562,7 @@ internal class CustomMenuPage(
         menu.ForceUpdateElement<Label>(
             reg.GetTablePosition(FIELD_ID_GMCM_MOD) - 5,
             label => label.String = GetGmcmSyncDescriptionText(
-                itemList.SelectedItem?.Gmcm,
+                itemList.SelectedItem.Gmcm,
                 (int)menu.Table.Size.X));
     }
 

@@ -81,4 +81,18 @@ public class GmcmAssociation
     /// "Keybind" to "Toggle &lt;Feature Name&gt;".
     /// </remarks>
     public bool UseCustomName { get; set; }
+
+    /// <summary>
+    /// Creates a copy of this instance.
+    /// </summary>
+    public GmcmAssociation Clone()
+    {
+        return new()
+        {
+            ModId = ModId,
+            FieldId = FieldId,
+            FieldName = FieldName,
+            UseCustomName = UseCustomName
+        };
+    }
 }

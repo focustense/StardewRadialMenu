@@ -23,6 +23,7 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
     public IReadOnlyList<CustomMenuItemConfiguration> Items => items;
     public int SelectedIndex { get; private set; } = 0;
     public CustomMenuItemConfiguration SelectedItem => items[SelectedIndex];
+    public IEnumerable<CustomMenuItemConfiguration> VisibleItems => items.Take(itemCount);
 
     private readonly ClickDetector clickDetector = new();
     private readonly List<CustomMenuItemConfiguration> items = [];
@@ -119,11 +120,11 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
             + MARGIN_BOTTOM;
     }
 
-    public void Load(IReadOnlyList<CustomMenuItemConfiguration> items)
+    public void Load(IEnumerable<CustomMenuItemConfiguration> items)
     {
         this.items.Clear();
         this.items.AddRange(items);
-        itemCount = items.Count;
+        itemCount = this.items.Count;
         if (itemCount == 0)
         {
             SetCount(1);
@@ -145,6 +146,10 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         while (items.Count < itemCount)
         {
             items.Add(new());
+        }
+        if (SelectedIndex >= count)
+        {
+            SelectedIndex = count - 1;
         }
     }
 

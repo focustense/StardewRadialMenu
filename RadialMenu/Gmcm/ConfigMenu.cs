@@ -8,6 +8,7 @@ internal class ConfigMenu(
     IGenericModMenuConfigApi gmcm,
     IGMCMOptionsAPI? gmcmOptions,
     GenericModConfigKeybindings? gmcmBindings,
+    GenericModConfigSync? gmcmSync,
     IManifest mod,
     ITranslationHelper translations,
     IModContentHelper modContent,
@@ -25,8 +26,9 @@ internal class ConfigMenu(
     private readonly Func<Configuration> getConfig = getConfig;
 
     // Sub-pages
-    private readonly CustomMenuPage customMenuPage =
-        new(gmcm, gmcmBindings, mod, translations, textureHelper, gameLoopEvents, getConfig);
+    private readonly CustomMenuPage customMenuPage = new(
+        gmcm, gmcmBindings, gmcmSync, mod, translations, textureHelper, gameLoopEvents,
+        getConfig);
     private readonly StylePage stylePage =
         new(gmcm, gmcmOptions, mod, modContent, translations, () => getConfig().Styles);
 

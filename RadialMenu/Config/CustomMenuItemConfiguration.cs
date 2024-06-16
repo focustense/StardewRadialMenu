@@ -49,6 +49,38 @@ public class CustomMenuItemConfiguration
     public GmcmAssociation? Gmcm { get; set; }
 
     /// <summary>
+    /// Creates a copy of this instance.
+    /// </summary>
+    /// <remarks>
+    /// Cloning is useful when loading configuration items into the GMCM UI, to avoid accidental
+    /// edits to the real configuration due to hacky instant UI updates.
+    /// </remarks>
+    public CustomMenuItemConfiguration Clone()
+    {
+        return new()
+        {
+            Name = Name,
+            Description = Description,
+            Keybind = Keybind,
+            SpriteSourceFormat = SpriteSourceFormat,
+            SpriteSourcePath = SpriteSourcePath,
+            Gmcm = Gmcm?.Clone(),
+        };
+    }
+
+    /// <summary>
+    /// Checks whether or not this item has any useful settings.
+    /// </summary>
+    public bool IsEmpty()
+    {
+        return string.IsNullOrEmpty(Name)
+            && string.IsNullOrEmpty(Description)
+            && !Keybind.IsBound
+            && string.IsNullOrEmpty(SpriteSourcePath)
+            && Gmcm is null;
+    }
+
+    /// <summary>
     /// Attempts to infer the custom asset path and bounds for the sprite, if one is configured.
     /// </summary>
     /// <param name="assetPath">Receives the parsed asset path, if successful.</param>
