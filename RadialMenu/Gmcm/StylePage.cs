@@ -8,6 +8,7 @@ namespace RadialMenu.Gmcm;
 
 internal class StylePage(
     IGenericModMenuConfigApi gmcm,
+    IGMCMOptionsAPI? gmcmOptions,
     IManifest mod,
     IModContentHelper modContent,
     ITranslationHelper translations,
@@ -31,6 +32,7 @@ internal class StylePage(
 
     // Read-only aliases for dependencies
     private readonly IGenericModMenuConfigApi gmcm = gmcm;
+    private readonly IGMCMOptionsAPI? gmcmOptions = gmcmOptions;
     private readonly IManifest mod = mod;
     private readonly IModContentHelper modContent = modContent;
     private readonly ITranslationHelper translations = translations;
@@ -57,6 +59,12 @@ internal class StylePage(
         LoadAssets();
         RegisterPage();
         menuPreview = new(Game1.graphics.GraphicsDevice, PREVIEW_SIZE, PREVIEW_SIZE);
+
+        // Do this early just to set up the dictionary. We'll do it again when the menu is opened.
+        // It's not needed when editing colors as hex values, but with GMCMOptions (color picker)
+        // enabled, the widgets are a bit eager and will try to fire the field-change handlers
+        // before our hacked-up ComplexOption hook gets to run.
+        UpdateColorValuesFromConfig();
     }
 
     /* ----- Setup Methods ----- */
@@ -81,9 +89,12 @@ internal class StylePage(
         gmcm.AddSectionTitle(
             mod,
             text: () => translations.Get("gmcm.style.colors"));
-        gmcm.AddParagraph(
-            mod,
-            text: () => translations.Get("gmcm.style.colors.slidernote"));
+        if (gmcmOptions is null)
+        {
+            gmcm.AddParagraph(
+                mod,
+                text: () => translations.Get("gmcm.style.colors.slidernote"));
+        }
         AddColorOption(
             FIELD_ID_INNER_COLOR,
             name: () => translations.Get("gmcm.style.colors.inner"),
@@ -221,7 +232,7 @@ internal class StylePage(
                 case FIELD_ID_CURSOR_COLOR:
                 case FIELD_ID_TITLE_COLOR:
                 case FIELD_ID_DESCRIPTION_COLOR:
-                    if (HexColor.TryParse((string)value, out var color))
+                    if (GetColorFromAmbiguousType(value) is Color color)
                     {
                         liveColorValues[fieldId] = color;
                         UpdateMenuPreview();
@@ -238,19 +249,51 @@ internal class StylePage(
         Action<HexColor> setColor,
         Func<string>? tooltip = null)
     {
-        gmcm.AddTextOption(
-            mod,
-            name: name,
-            tooltip: tooltip,
-            fieldId: fieldId,
-            getValue: () => getColor().ToString(),
-            setValue: hexString =>
-            {
-                if (HexColor.TryParse(hexString, out var hexColor))
+        if (gmcmOptions is not null)
+        {
+            gmcmOptions.AddColorOption(
+                mod,
+                name: name,
+                tooltip: tooltip,
+                fieldId: fieldId,
+                getValue: () => getColor(),
+                setValue: value => setColor(new(value)),
+                colorPickerStyle: (uint)(
+                    IGMCMOptionsAPI.ColorPickerStyle.RGBSliders
+                    | IGMCMOptionsAPI.ColorPickerStyle.HSLColorWheel
+                    | IGMCMOptionsAPI.ColorPickerStyle.HSVColorWheel
+                    | IGMCMOptionsAPI.ColorPickerStyle.RadioChooser));
+        }
+        else
+        {
+            gmcm.AddTextOption(
+                mod,
+                name: name,
+                tooltip: tooltip,
+                fieldId: fieldId,
+                getValue: () => getColor().ToString(),
+                setValue: hexString =>
                 {
-                    setColor(hexColor);
-                }
-            });
+                    if (HexColor.TryParse(hexString, out var hexColor))
+                    {
+                        setColor(hexColor);
+                    }
+                });
+        }
+    }
+
+    private static Color? GetColorFromAmbiguousType(object value)
+    {
+        if (value is Color color)
+        {
+            return color;
+        }
+        if (value is string formattedColor
+            && HexColor.TryParse(formattedColor, out var hexColor))
+        {
+            return hexColor;
+        }
+        return null;
     }
 
     /* ----- Live Updates ----- */

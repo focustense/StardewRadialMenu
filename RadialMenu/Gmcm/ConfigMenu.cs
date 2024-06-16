@@ -6,6 +6,7 @@ namespace RadialMenu.Gmcm;
 
 internal class ConfigMenu(
     IGenericModMenuConfigApi gmcm,
+    IGMCMOptionsAPI? gmcmOptions,
     GenericModConfigKeybindings? gmcmBindings,
     IManifest mod,
     ITranslationHelper translations,
@@ -18,6 +19,7 @@ internal class ConfigMenu(
 
     // Primary ctor properties can't be read-only and we're OCD.
     private readonly IGenericModMenuConfigApi gmcm = gmcm;
+    private readonly IGMCMOptionsAPI? gmcmOptions = gmcmOptions;
     private readonly IManifest mod = mod;
     private readonly ITranslationHelper translations = translations;
     private readonly Func<Configuration> getConfig = getConfig;
@@ -26,7 +28,7 @@ internal class ConfigMenu(
     private readonly CustomMenuPage customMenuPage =
         new(gmcm, gmcmBindings, mod, translations, textureHelper, gameLoopEvents, getConfig);
     private readonly StylePage stylePage =
-        new(gmcm, mod, modContent, translations, () => getConfig().Styles);
+        new(gmcm, gmcmOptions, mod, modContent, translations, () => getConfig().Styles);
 
     public void Setup()
     {

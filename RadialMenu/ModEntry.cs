@@ -5,7 +5,6 @@ using RadialMenu.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using System;
 using System.Reflection;
 
 namespace RadialMenu
@@ -15,10 +14,12 @@ namespace RadialMenu
     public class ModEntry : Mod
     {
         private const string GMCM_MOD_ID = "spacechase0.GenericModConfigMenu";
+        private const string GMCM_OPTIONS_MOD_ID = "jltaylor-us.GMCMOptions";
 
         private Configuration config = null!;
         private ConfigMenu? configMenu;
         private IGenericModMenuConfigApi? configMenuApi;
+        private IGMCMOptionsAPI? gmcmOptionsApi;
         private GenericModConfigKeybindings? gmcmKeybindings;
         private GenericModConfigSync? gmcmSync;
         private MenuItemBuilder menuItemBuilder = null!;
@@ -79,6 +80,7 @@ namespace RadialMenu
         private void GameLoop_GameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             configMenuApi = Helper.ModRegistry.GetApi<IGenericModMenuConfigApi>(GMCM_MOD_ID);
+            gmcmOptionsApi = Helper.ModRegistry.GetApi<IGMCMOptionsAPI>(GMCM_OPTIONS_MOD_ID);
             LoadGmcmKeybindings();
             RegisterConfigMenu();
         }
@@ -291,6 +293,7 @@ namespace RadialMenu
                 save: () => Helper.WriteConfig(config));
             configMenu = new(
                 configMenuApi,
+                gmcmOptionsApi,
                 gmcmKeybindings,
                 ModManifest,
                 Helper.Translation,
