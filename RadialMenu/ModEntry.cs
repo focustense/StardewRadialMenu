@@ -330,9 +330,7 @@ namespace RadialMenu
         {
             if (!item.Keybind.IsBound)
             {
-                Monitor.Log(
-                    $"Failed to activate '{item.Name}' because it has no configured key binding.",
-                    LogLevel.Warn);
+                Game1.showRedMessage(Helper.Translation.Get("error.missingbinding"));
                 return;
             }
             keybindActivator.Activate(item.Keybind);

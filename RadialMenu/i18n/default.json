@@ -1,4 +1,5 @@
 {
+  "error.missingbinding": "No keybinding is set up for this action.",
   "gmcm.controls": "Controls",
   "gmcm.controls.trigger.deadzone": "Trigger Dead Zone",
   "gmcm.controls.trigger.deadzone.tooltip": "Helps prevent accidental triggering on very sensitive or inaccurate controllers.",
