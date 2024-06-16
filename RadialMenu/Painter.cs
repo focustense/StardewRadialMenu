@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using RadialMenu.Config;
 using StardewValley;
+using System.Globalization;
 using System.Text;
 using TileRectangle = xTile.Dimensions.Rectangle;
 
@@ -17,6 +18,9 @@ internal class Painter
     private const float TWO_PI = MathF.PI * 2;
 
     private static readonly float ROOT_3 = MathF.Sqrt(3);
+
+    private static readonly TextureSegment UnknownSprite =
+        new(Game1.mouseCursors, /* Question Mark */ new(176, 425, 9, 12));
 
     public IReadOnlyList<MenuItem> Items { get; set; } = [];
     public Styles Styles => getStyles();
@@ -103,8 +107,7 @@ internal class Painter
         }
     }
 
-    private void PaintItems(
-        SpriteBatch spriteBatch, TileRectangle viewport)
+    private void PaintItems(SpriteBatch spriteBatch, TileRectangle viewport)
     {
         var centerX = viewport.Width / 2.0f;
         var centerY = viewport.Height / 2.0f;
@@ -125,27 +128,36 @@ internal class Painter
                     (int)MathF.Round(displaySize.X * scale),
                     (int)MathF.Round(displaySize.Y * scale));
             }
-            var sourceSize =
-                item.SourceRectangle?.Size
-                ?? new Point(item.Texture.Width, item.Texture.Height);
+            var sourceSize = GetSpriteSize(item, out var isMonogram);
             var aspectRatio = (float)sourceSize.X / sourceSize.Y;
             // Sprites draw from top left rather than center; we have to adjust for it.
             var itemPoint2d = new Vector2(
                 centerX + itemPoint.X - displaySize.X / 2.0f,
                 centerY + itemPoint.Y - displaySize.Y / 2.0f);
             var destinationRect = new Rectangle(itemPoint2d.ToPoint(), displaySize);
-            var shadowTexture = Game1.shadowTexture;
-            spriteBatch.Draw(
-                shadowTexture,
-                destinationRect.Location.ToVector2() + new Vector2(32f, 52f),
-                shadowTexture.Bounds,
-                new Color(Color.Gray, 0.5f),
-                0.0f,
-                new Vector2(shadowTexture.Bounds.Center.X, shadowTexture.Bounds.Center.Y),
-                3f,
-                SpriteEffects.None,
-                -0.0001f);
-            spriteBatch.Draw(item.Texture, destinationRect, item.SourceRectangle, Color.White);
+            if (isMonogram)
+            {
+                Monogram.Draw(
+                    spriteBatch,
+                    destinationRect,
+                    item.Title,
+                    Color.White);
+            }
+            else
+            {
+                var shadowTexture = Game1.shadowTexture;
+                spriteBatch.Draw(
+                    shadowTexture,
+                    destinationRect.Location.ToVector2() + new Vector2(32f, 52f),
+                    shadowTexture.Bounds,
+                    new Color(Color.Gray, 0.5f),
+                    0.0f,
+                    new Vector2(shadowTexture.Bounds.Center.X, shadowTexture.Bounds.Center.Y),
+                    3f,
+                    SpriteEffects.None,
+                    -0.0001f);
+                spriteBatch.Draw(item.Texture, destinationRect, item.SourceRectangle, Color.White);
+            }
             if (item.Quality is int quality && quality > 0)
             {
                 // From StardewValley:Object.cs
@@ -366,12 +378,22 @@ internal class Painter
 
     private static Point GetScaledSize(MenuItem item, int height)
     {
-        var sourceSize =
-                item.SourceRectangle?.Size
-                ?? new Point(item.Texture.Width, item.Texture.Height);
+        var sourceSize = GetSpriteSize(item, out _);
         var aspectRatio = (float)sourceSize.X / sourceSize.Y;
         var width = (int)MathF.Round(height * aspectRatio);
         return new(width, height);
+    }
+
+    private static Point GetSpriteSize(MenuItem item, out bool isMonogram)
+    {
+        if (item.Texture is null)
+        {
+            var monogramSize = Monogram.Measure(item.Title)?.ToPoint();
+            isMonogram = monogramSize.HasValue;
+            return monogramSize ?? UnknownSprite.SourceRect!.Value.Size;
+        }
+        isMonogram = false;
+        return item.SourceRectangle?.Size ?? new Point(item.Texture.Width, item.Texture.Height);
     }
 
     private static IEnumerable<string> WrapText(

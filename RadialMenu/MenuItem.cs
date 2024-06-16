@@ -10,7 +10,7 @@ namespace RadialMenu
         string Description,
         int? StackSize,
         int? Quality,
-        Texture2D Texture,
+        Texture2D? Texture,
         Rectangle? SourceRectangle,
         Func<DelayedActions?, ItemActivationResult> Activate);
 
@@ -18,7 +18,7 @@ namespace RadialMenu
         TextureHelper textureHelper,
         Action<CustomMenuItemConfiguration> customItemActivator)
     {
-        private readonly Dictionary<(SpriteSourceFormat, string), TextureSegment> spriteCache = [];
+        private readonly Dictionary<(SpriteSourceFormat, string), TextureSegment?> spriteCache = [];
 
         public MenuItem CustomItem(CustomMenuItemConfiguration item)
         {
@@ -37,8 +37,8 @@ namespace RadialMenu
                 item.Description,
                 /* StackSize= */ null,
                 /* Quality= */ null,
-                sprite.Texture,
-                sprite.SourceRect,
+                sprite?.Texture,
+                sprite?.SourceRect,
                 delayedActions =>
                 {
                     if (delayedActions == DelayedActions.All)
@@ -52,7 +52,7 @@ namespace RadialMenu
 
         public MenuItem GameItem(Item item, int itemIndex)
         {
-            var data = ItemRegistry.GetData(item.QualifiedItemId);
+            var data = ItemRegistry.GetDataOrErrorItem(item.QualifiedItemId);
             var texture = data.GetTexture();
             var sourceRect = data.GetSourceRect();
             return new(
