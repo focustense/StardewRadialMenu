@@ -318,6 +318,7 @@ namespace RadialMenu
             {
                 return;
             }
+            Game1.playSound("select");
             remainingActivationDelayMs = config.ActivationDelayMs;
             cursor.SuppressUntilTriggerRelease();
         }
