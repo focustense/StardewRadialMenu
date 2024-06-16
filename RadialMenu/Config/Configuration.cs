@@ -1,6 +1,6 @@
 ﻿namespace RadialMenu.Config;
 
-public class Configuration
+public class Configuration : ICursorConfiguration
 {
     /// <summary>
     /// Dead zone for the left/right trigger buttons for activating/deactivating the menu.
@@ -12,6 +12,12 @@ public class Configuration
     /// necessary to prevent accidental presses, or reduce it for hair-trigger response.
     /// </remarks>
     public float TriggerDeadZone { get; set; } = 0.2f;
+
+    /// <summary>
+    /// Make the left trigger bring up the menu normally shown by the right trigger (shortcuts) and
+    /// vice versa (right trigger shows items).
+    /// </summary>
+    public bool SwapTriggers { get; set; } = false;
 
     /// <summary>
     /// Customizes which thumbstick is used to select items from the radial menus.
@@ -33,15 +39,18 @@ public class Configuration
     /// </para>
     /// </remarks>
     public float ThumbStickDeadZone { get; set; } = 0.2f;
+
     /// <summary>
     /// How to activate the selected item; refer to <see cref="ItemActivationMethod"/>.
     /// </summary>
     public ItemActivationMethod Activation { get; set; }
+
     /// <summary>
     /// Duration to hold the menu open (ignoring further inputs, and with gameplay paused) before
     /// the item activation completes.
     /// </summary>
     public int ActivationDelayMs { get; set; } = 250;
+
     /// <summary>
     /// Specifies which types of actions should receive the <see cref="ActivationDelayMs"/>.
     /// </summary>

@@ -2,6 +2,8 @@
   "gmcm.controls": "Controls",
   "gmcm.controls.trigger.deadzone": "Trigger Dead Zone",
   "gmcm.controls.trigger.deadzone.tooltip": "Helps prevent accidental triggering on very sensitive or inaccurate controllers.",
+  "gmcm.controls.trigger.swap": "Swap Triggers",
+  "gmcm.controls.trigger.swap.tooltip": "Show items with the right trigger and shortcuts with the left trigger.",
   "gmcm.controls.thumbstick.preference": "Thumbstick Preference",
   "gmcm.controls.thumbstick.preference.tooltip": "Choose which thumbstick controls the menu selection.",
   "gmcm.controls.thumbstick.preference.alwaysleft": "Left Stick",

@@ -36,11 +36,10 @@ namespace RadialMenu
             config = Helper.ReadConfig<Configuration>();
             textureHelper = new(Helper.GameContent, Monitor);
             menuItemBuilder = new(textureHelper, ActivateCustomMenuItem);
-            cursor = new Cursor();
-            painter = new(Game1.graphics.GraphicsDevice);
+            cursor = new(() => config);
+            painter = new(Game1.graphics.GraphicsDevice, () => config.Styles);
             keybindActivator = new(helper.Input);
             preMenuState = new(Game1.freezeControls);
-            ApplyConfiguration();
 
             helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             // For optimal latency: handle input before the Update loop, perform actions/rendering after.
@@ -203,14 +202,6 @@ namespace RadialMenu
             }
         }
 
-        private void ApplyConfiguration()
-        {
-            painter.Styles = config.Styles;
-            cursor.ThumbStickPreference = config.ThumbStickPreference;
-            cursor.ThumbStickDeadZone = config.ThumbStickDeadZone;
-            cursor.TriggerDeadZone = config.TriggerDeadZone;
-        }
-
         private static GamePadState GetRawGamePadState()
         {
             return Game1.playerOneIndex >= PlayerIndex.One
@@ -313,7 +304,6 @@ namespace RadialMenu
         private void ResetConfiguration()
         {
             config = new();
-            ApplyConfiguration();
         }
 
         private void RestorePreMenuState()

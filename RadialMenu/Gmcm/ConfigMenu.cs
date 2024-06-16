@@ -48,6 +48,12 @@ internal class ConfigMenu(
             setValue: value => Config.TriggerDeadZone = value,
             min: 0.0f,
             max: 1.0f);
+        gmcm.AddBoolOption(
+            mod,
+            name: () => translations.Get("gmcm.controls.trigger.swap"),
+            tooltip: () => translations.Get("gmcm.controls.trigger.swap.tooltip"),
+            getValue: () => Config.SwapTriggers,
+            setValue: value => Config.SwapTriggers = value);
         AddEnumOption(
             "gmcm.controls.thumbstick.preference",
             getValue: () => Config.ThumbStickPreference,
