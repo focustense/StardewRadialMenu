@@ -14,12 +14,6 @@ internal class IconSelectorWidget(ITranslationHelper translations)
     private const double CURSOR_FOCUS_DURATION_MS = 120;
     private const float CURSOR_FOCUS_SCALE = 1.08f;
     private const int HORIZONTAL_PADDING = 16; // Between buttons, text, etc.
-    private const int IMAGE_HEIGHT = 128;
-    // Width is chosen to be larger than height to allow for wide aspects, even though essentially
-    // all item sprites are either square or tall. Anyway, we have much more horizontal space than
-    // vertical space to play with in the UI.
-    private const int IMAGE_WIDTH = 160;
-    private const int IMAGE_PADDING = 16;
     private const int ROW_SPACING = 16;
 
     private static readonly Rectangle LeftArrowCursorRect = new(0, 256, 64, 64);
@@ -58,9 +52,7 @@ internal class IconSelectorWidget(ITranslationHelper translations)
     }
 
     private readonly ITranslationHelper translations = translations;
-    private readonly NinePatch previewBorder =
-        new(Game1.mouseCursors, new(293, 360, 24, 24), new(5, 5));
-
+    private readonly SpritePreviewWidget preview = new();
     private readonly ClickDetector clickDetector = new(new ClickRepeat(250, 50));
 
     private Control? clickedControl;
@@ -112,14 +104,10 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         hoveredControl = null;
         clickedControl = null;
 
-        // Preview width is the outer width and doesn't account for the border itself. Assume that
-        // the padding is chosen to be large enough to make that a non-issue.
-        var previewWidth = IMAGE_WIDTH + 2 * IMAGE_PADDING;
-        var previewHeight = IMAGE_HEIGHT + 2 * IMAGE_PADDING;
         var currentPosition = startPosition;
 
         // Category selector
-        var maxCategoryWidth = Math.Max(GetMaxCategoryTextWidth(), previewWidth);
+        var maxCategoryWidth = Math.Max(GetMaxCategoryTextWidth(), SpritePreviewWidget.Width);
         DrawCursorControl(spriteBatch, Control.PrevCategory, currentPosition, LeftArrowCursorRect);
         currentPosition.X += LeftArrowCursorRect.Width + HORIZONTAL_PADDING;
         var textHeight = Font.MeasureString("A").Y;
@@ -137,30 +125,22 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         currentPosition.X = startPosition.X;
         currentPosition.Y += LeftArrowCursorRect.Height + ROW_SPACING;
         var previewArrowTop =
-            currentPosition.Y + previewHeight / 2 - LeftArrowCursorRect.Height / 2;
+            currentPosition.Y + SpritePreviewWidget.Height / 2 - LeftArrowCursorRect.Height / 2;
         DrawCursorControl(
             spriteBatch,
             Control.PrevImage,
             new(currentPosition.X, previewArrowTop),
             LeftArrowCursorRect);
         currentPosition.X += LeftArrowCursorRect.Width + HORIZONTAL_PADDING;
-        var borderRect = new Rectangle(currentPosition.ToPoint(), new(previewWidth, previewHeight));
-        previewBorder.Draw(spriteBatch, borderRect, 4.0f);
+        
         var itemImage = ItemRegistry.GetData(selectedItemId);
         if (itemImage is not null)
         {
-            var texture = itemImage.GetTexture();
-            var sourceRect = itemImage.GetSourceRect();
-            var destinationWidth =
-                (int)MathF.Round(sourceRect.Width / (float)sourceRect.Height * IMAGE_HEIGHT);
-            var destinationRect = new Rectangle(
-                borderRect.Center.X - destinationWidth / 2,
-                (int)currentPosition.Y + IMAGE_PADDING,
-                destinationWidth,
-                IMAGE_HEIGHT);
-            spriteBatch.Draw(texture, destinationRect, sourceRect, Color.White);
+            preview.Texture = itemImage.GetTexture();
+            preview.SourceRect = itemImage.GetSourceRect();
+            preview.Draw(spriteBatch, currentPosition.ToPoint());
         }
-        currentPosition.X = borderRect.Right + HORIZONTAL_PADDING;
+        currentPosition.X += SpritePreviewWidget.Width + HORIZONTAL_PADDING;
         DrawCursorControl(
             spriteBatch,
             Control.NextImage,
@@ -172,7 +152,7 @@ internal class IconSelectorWidget(ITranslationHelper translations)
 
     public int GetHeight()
     {
-        return LeftArrowCursorRect.Height + ROW_SPACING + IMAGE_HEIGHT + 2 * IMAGE_PADDING;
+        return LeftArrowCursorRect.Height + ROW_SPACING + SpritePreviewWidget.Height;
     }
 
     private float GetAnimationProgress()

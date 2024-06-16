@@ -55,7 +55,8 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
             }
             var item = items[i];
             var centerX = (int)position.X + maxItemWidth / 2;
-            var (texture, sourceRect, destinationRect) = LayoutItem(item, centerX, position.Y);
+            var (texture, sourceRect, destinationRect) =
+                LayoutItem(item, centerX, position.Y, maxItemWidth);
             var imageDestinationRect = destinationRect;
             var hoverTestRect = destinationRect;
             if (hoverTestRect.Width < ITEM_HEIGHT)
@@ -161,13 +162,17 @@ internal class CustomItemListWidget(TextureHelper textureHelper)
         return (float)(Math.Sin((gameTime - startTime) * Math.PI / 512) + 1.0f) / 2.0f;
     }
 
-    private ItemLayout LayoutItem(CustomMenuItemConfiguration item, float centerX, float topY)
+    private ItemLayout LayoutItem(
+        CustomMenuItemConfiguration item,
+        float centerX,
+        float topY,
+        float maxItemWidth)
     {
         var sprite = textureHelper.GetSprite(item.SpriteSourceFormat, item.SpriteSourcePath)
             ?? new(Game1.mouseCursors, /* Question Mark */ new(176, 425, 9, 12));
         var sourceSize = sprite.SourceRect?.Size ?? sprite.Texture.Bounds.Size;
         var aspectRatio = sourceSize.X / (float)sourceSize.Y;
-        var itemWidth = aspectRatio * ITEM_HEIGHT;
+        var itemWidth = Math.Min(aspectRatio * ITEM_HEIGHT, maxItemWidth);
         var destinationRect = new Rectangle(
             (int)MathF.Round(centerX - itemWidth / 2), (int)topY, (int)itemWidth, ITEM_HEIGHT);
         return new(sprite.Texture, sprite.SourceRect, destinationRect);

@@ -1,4 +1,5 @@
 ﻿using StardewModdingAPI.Utilities;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RadialMenu.Config;
 
@@ -33,7 +34,7 @@ public class CustomMenuItemConfiguration
     /// item's <see cref="StardewValley.Item.QualifiedItemId"/>, such as <c>O(128)</c>. If an
     /// unqualified ID is used, the menu will make an attempt anyway, but ID conflicts are
     /// possible and the wrong icon may get displayed.</item>
-    /// <item>If the format is <see cref="SpriteSourceFormat.TextureRect"/>, then this is a
+    /// <item>If the format is <see cref="SpriteSourceFormat.TextureSegment"/>, then this is a
     /// string in the form of <c>{assetPath}:(left,top,width,height)</c>. For example, to
     /// display the sprite for the Lucky Purple Shorts, use the string
     /// <c>maps/springobjects:(368,32,16,16)</c>.</item>
@@ -46,4 +47,23 @@ public class CustomMenuItemConfiguration
     /// <see cref="Keybind"/>.
     /// </summary>
     public GmcmAssociation? Gmcm { get; set; }
+
+    /// <summary>
+    /// Attempts to infer the custom asset path and bounds for the sprite, if one is configured.
+    /// </summary>
+    /// <param name="assetPath">Receives the parsed asset path, if successful.</param>
+    /// <param name="sourceRect">Receives the parsed source rectangle, if successful.</param>
+    /// <returns>
+    /// True if <see cref="SpriteSourceFormat"/> is <see cref="SpriteSourceFormat.TextureSegment"/> and
+    /// the <see cref="SpriteSourcePath"/> is a valid path:rect format. Otherwise, `null`.
+    /// </returns>
+    public bool TryGetTextureSegment([MaybeNullWhen(false)] out TextureSegmentPath parsedPath)
+    {
+        if (SpriteSourceFormat == SpriteSourceFormat.TextureSegment)
+        {
+            return TextureSegmentPath.TryParse(SpriteSourcePath, out parsedPath);
+        }
+        parsedPath = null;
+        return false;
+    }
 }

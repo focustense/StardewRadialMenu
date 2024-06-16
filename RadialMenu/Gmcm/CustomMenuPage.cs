@@ -4,7 +4,8 @@ using RadialMenu.Config;
 using SpaceShared.UI;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
-using Newtonsoft.Json.Linq;
+using Microsoft.Xna.Framework;
+using StardewModdingAPI.Events;
 
 namespace RadialMenu.Gmcm;
 
@@ -14,6 +15,7 @@ internal class CustomMenuPage(
     IManifest mod,
     ITranslationHelper translations,
     TextureHelper textureHelper,
+    IGameLoopEvents gameLoopEvents,
     Func<Configuration> getConfig)
 {
     public const string ID = "CustomMenu";
@@ -27,6 +29,10 @@ internal class CustomMenuPage(
     // Fields related to the selected item image.
     private const string FIELD_ID_IMAGE_TYPE = $"{FIELD_ID_PREFIX}.ImageType";
     private const string FIELD_ID_IMAGE_ITEM_ID = $"{FIELD_ID_PREFIX}.ImageItemId";
+    private const string FIELD_ID_IMAGE_ITEM_SELECTOR = $"{FIELD_ID_PREFIX}.ImageItemSelector";
+    private const string FIELD_ID_IMAGE_ASSET_PATH = $"{FIELD_ID_PREFIX}.ImageAssetPath";
+    private const string FIELD_ID_IMAGE_SOURCE_RECT = $"{FIELD_ID_PREFIX}.ImageSourceRect";
+    private const string FIELD_ID_IMAGE_PREVIEW = $"{FIELD_ID_PREFIX}.ImagePreview";
     // Fields related specifically to GMCM sync for an item.
     private const string FIELD_ID_GMCM_MOD = $"{FIELD_ID_PREFIX}.Gmcm.Mod";
     private const string FIELD_ID_GMCM_KEYBIND = $"{FIELD_ID_PREFIX}.Gmcm.Keybind";
@@ -37,9 +43,11 @@ internal class CustomMenuPage(
     private readonly RegistrationHelper reg = new(gmcm, mod);
     private readonly IManifest mod = mod;
     private readonly ITranslationHelper translations = translations;
+    private readonly IGameLoopEvents gameLoopEvents = gameLoopEvents;
     private readonly Func<Configuration> getConfig = getConfig;
     private readonly CustomItemListWidget itemList = new(textureHelper);
     private readonly IconSelectorWidget iconSelector = new(translations);
+    private readonly SpritePreviewWidget customImagePreview = new();
 
     protected Configuration Config => getConfig();
 
@@ -51,9 +59,22 @@ internal class CustomMenuPage(
     // If the player toggles the box and then selects an action afterward, we want both settings to
     // apply; this requires tracking the checkbox state independently.
     private bool isGmcmTitleOverrideEnabled;
+    // When setting up a custom (non-item-based) sprite, we have to combine both of these fields
+    // into a single formatted path, so they need to be tracked separately; we don't want to set an
+    // invalid value on the item, so track the raw values and then try parsing on update.
+    private string selectedSpriteAssetPath = "";
+    private string selectedSpriteTextureRect = "";
+    // The original list of table rows, which we make a copy of before "hiding" (removing) rows for
+    // the first time, so we can restore them later.
+    private List<Element[]>? allTableRows;
+    // Used for deferring some code to after the game loop finishes, to defer things we're not
+    // allowed to do right away (like modify the Table Rows from a Draw call).
+    private Action? actionOnGameUpdate;
 
     public void Setup()
     {
+        gameLoopEvents.UpdateTicked += GameLoopEvents_UpdateTicked;
+
         itemList.Load(Config.CustomMenuItems);
         itemList.SelectedIndexChanged += ItemList_SelectedIndexChanged;
         itemList.SelectedIndexChanging += ItemList_SelectedIndexChanging;
@@ -91,6 +112,7 @@ internal class CustomMenuPage(
                 LateLoad();
                 itemList.Draw(spriteBatch, startPosition);
             },
+            beforeMenuClosed: () => allTableRows = null,
             beforeMenuOpened: () =>
             {
                 isLateLoadFinished = false;
@@ -156,8 +178,34 @@ internal class CustomMenuPage(
             });
         reg.AddComplexOption(
             name: () => "",
+            fieldId: FIELD_ID_IMAGE_ITEM_SELECTOR,
             draw: iconSelector.Draw,
             height: iconSelector.GetHeight);
+        reg.AddTextOption(
+            name: () => translations.Get("gmcm.custom.item.image.assetpath"),
+            tooltip: () => translations.Get("gmcm.custom.item.image.assetpath.tooltip"),
+            fieldId: FIELD_ID_IMAGE_ASSET_PATH,
+            getValue: () => selectedSpriteAssetPath,
+            setValue: value =>
+            {
+                selectedSpriteAssetPath = value;
+                UpdateCustomSpritePreview();
+            });
+        reg.AddTextOption(
+            name: () => translations.Get("gmcm.custom.item.image.sourcerect"),
+            tooltip: () => translations.Get("gmcm.custom.item.image.sourcerect.tooltip"),
+            fieldId: FIELD_ID_IMAGE_SOURCE_RECT,
+            getValue: () => selectedSpriteTextureRect,
+            setValue: value =>
+            {
+                selectedSpriteTextureRect = value;
+                UpdateCustomSpritePreview();
+            });
+        reg.AddComplexOption(
+            name: () => "",
+            fieldId: FIELD_ID_IMAGE_PREVIEW,
+            draw: customImagePreview.Draw,
+            height: () => SpritePreviewWidget.Height);
         if (gmcmBindings is not null)
         {
             reg.AddSectionTitle(() => translations.Get("gmcm.custom.item.gmcm"));
@@ -226,6 +274,14 @@ internal class CustomMenuPage(
                         iconSelector.SelectedItemId = (string)value;
                     }
                     break;
+                case FIELD_ID_IMAGE_ASSET_PATH:
+                    selectedSpriteAssetPath = (string)value;
+                    UpdateCustomSpritePreview();
+                    break;
+                case FIELD_ID_IMAGE_SOURCE_RECT:
+                    selectedSpriteTextureRect = (string)value;
+                    UpdateCustomSpritePreview();
+                    break;
                 case FIELD_ID_GMCM_MOD:
                     gmcmFilterModId = (string)value;
                     if (UiInternals.TryGetModConfigMenuAndPage(out var menu, out var page))
@@ -252,6 +308,12 @@ internal class CustomMenuPage(
                     break;
             }
         });
+    }
+
+    private void GameLoopEvents_UpdateTicked(object? sender, UpdateTickedEventArgs e)
+    {
+        actionOnGameUpdate?.Invoke();
+        actionOnGameUpdate = null;
     }
 
     private void IconSelector_SelectedItemChanged(object? sender, EventArgs e)
@@ -309,6 +371,32 @@ internal class CustomMenuPage(
         isLateLoadFinished = true;
     }
 
+    /* ----- Sprite/image utilities ----- */
+
+    // Rectangle.ToString() has a format that's not suitable for our purposes.
+    private static string RectToString(Rectangle rect)
+    {
+        return $"{rect.X},{rect.Y},{rect.Width},{rect.Height}";
+    }
+
+    private void UpdateCustomSpritePreview()
+    {
+        customImagePreview.Texture = null;
+        customImagePreview.SourceRect = null;
+
+        var formattedPath = $"{selectedSpriteAssetPath}:({selectedSpriteTextureRect})";
+        if (TextureSegmentPath.TryParse(formattedPath, out var textureSegment))
+        {
+            itemList.SelectedItem.SpriteSourcePath = formattedPath;
+            var sprite = textureHelper.GetSprite(SpriteSourceFormat.TextureSegment, formattedPath);
+            if (sprite is not null)
+            {
+                customImagePreview.Texture = sprite.Texture;
+                customImagePreview.SourceRect = sprite.SourceRect;
+            }
+        }
+    }
+
     /* ----- GMCM association options ----- */
 
     private void ForceSaveSelectedItemProperties()
@@ -329,10 +417,22 @@ internal class CustomMenuPage(
 
     private void ForceUpdateSelectedItemProperties()
     {
-        iconSelector.SelectedItemId =
-            itemList.SelectedItem?.SpriteSourceFormat == SpriteSourceFormat.ItemIcon
-                ? itemList.SelectedItem.SpriteSourcePath
-                : "";
+        actionOnGameUpdate = ForceUpdateSelectedItemPropertiesLate;
+
+        var isCustomImage =
+            itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.TextureSegment;
+        iconSelector.SelectedItemId = !isCustomImage ? itemList.SelectedItem.SpriteSourcePath : "";
+        if (itemList.SelectedItem?.TryGetTextureSegment(out var textureSegment) ?? false)
+        {
+            selectedSpriteAssetPath = textureSegment.AssetPath;
+            selectedSpriteTextureRect = RectToString(textureSegment.SourceRect);
+        }
+        else
+        {
+            selectedSpriteAssetPath = "";
+            selectedSpriteTextureRect = "";
+        }
+        UpdateCustomSpritePreview();
 
         if (!UiInternals.TryGetModConfigMenuAndPage(out var menu, out var page, ID))
         {
@@ -348,6 +448,8 @@ internal class CustomMenuPage(
         ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
         ForceUpdateDropdown(page, menu, FIELD_ID_IMAGE_TYPE);
         ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_ITEM_ID);
+        ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_ASSET_PATH);
+        ForceUpdateTextBox(page, menu, FIELD_ID_IMAGE_SOURCE_RECT);
         if (gmcmBindings is not null)
         {
             gmcmFilterModId = itemList.SelectedItem?.Gmcm?.ModId ?? "";
@@ -359,6 +461,32 @@ internal class CustomMenuPage(
                 ForceUpdateGmcmSyncDescription();
             }
         }
+    }
+
+    // These should run on every sync, but aren't safe to run from within Draw.
+    private void ForceUpdateSelectedItemPropertiesLate()
+    {
+        if (!UiInternals.TryGetModConfigMenuAndPage(out var menu, out var page, ID))
+        {
+            return;
+        }
+        if (allTableRows is null)
+        {
+            allTableRows = new(menu.Table.Rows);
+        }
+        else
+        {
+            menu.Table.Rows.Clear();
+            menu.Table.Rows.AddRange(allTableRows);
+        }
+        var isCustomImage =
+            itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.TextureSegment;
+        SetHidden(menu, FIELD_ID_IMAGE_ITEM_ID, 0, 2, isCustomImage);
+        SetHidden(menu, FIELD_ID_IMAGE_ITEM_SELECTOR, 0, 2, isCustomImage);
+        SetHidden(menu, FIELD_ID_IMAGE_ASSET_PATH, 0, 2, !isCustomImage);
+        SetHidden(menu, FIELD_ID_IMAGE_SOURCE_RECT, 0, 2, !isCustomImage);
+        SetHidden(menu, FIELD_ID_IMAGE_PREVIEW, 0, 2, !isCustomImage);
+        menu.Table.RemoveHiddenRows();
     }
 
     private void ForceUpdateGmcmSyncDescription()
@@ -523,5 +651,16 @@ internal class CustomMenuPage(
             return true;
         }
         return false;
+    }
+
+    private void SetHidden(
+        SpecificModConfigMenu menu,
+        string fieldId,
+        int offset,
+        int count,
+        bool hidden)
+    {
+        var startIndex = reg.GetTablePosition(fieldId) + offset;
+        menu.Table.SetHidden(startIndex, count, hidden);
     }
 }

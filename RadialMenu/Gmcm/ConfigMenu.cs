@@ -1,5 +1,6 @@
 ﻿using RadialMenu.Config;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 
 namespace RadialMenu.Gmcm;
 
@@ -10,6 +11,7 @@ internal class ConfigMenu(
     ITranslationHelper translations,
     IModContentHelper modContent,
     TextureHelper textureHelper,
+    IGameLoopEvents gameLoopEvents,
     Func<Configuration> getConfig)
 {
     protected Configuration Config => getConfig();
@@ -22,7 +24,7 @@ internal class ConfigMenu(
 
     // Sub-pages
     private readonly CustomMenuPage customMenuPage =
-        new(gmcm, gmcmBindings, mod, translations, textureHelper, getConfig);
+        new(gmcm, gmcmBindings, mod, translations, textureHelper, gameLoopEvents, getConfig);
     private readonly StylePage stylePage =
         new(gmcm, mod, modContent, translations, () => getConfig().Styles);
 

@@ -244,6 +244,7 @@ namespace RadialMenu
                 Helper.Translation,
                 Helper.ModContent,
                 textureHelper,
+                Helper.Events.GameLoop,
                 () => config);
             configMenu.Setup();
         }
