@@ -25,6 +25,7 @@
   <ItemGroup>
     <Reference Include="GenericModConfigMenu">
       <HintPath>..\ReferenceLibs\GenericModConfigMenu.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
 </Project>
