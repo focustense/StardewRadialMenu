@@ -37,6 +37,15 @@ public class Configuration
     /// How to activate the selected item; refer to <see cref="ItemActivationMethod"/>.
     /// </summary>
     public ItemActivationMethod Activation { get; set; }
+    /// <summary>
+    /// Duration to hold the menu open (ignoring further inputs, and with gameplay paused) before
+    /// the item activation completes.
+    /// </summary>
+    public int ActivationDelayMs { get; set; } = 250;
+    /// <summary>
+    /// Specifies which types of actions should receive the <see cref="ActivationDelayMs"/>.
+    /// </summary>
+    public DelayedActions DelayedActions { get; set; } = DelayedActions.ToolSwitch;
 
     /// <summary>
     /// Maximum number of items to display in the inventory radial menu.

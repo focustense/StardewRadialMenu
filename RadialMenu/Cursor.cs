@@ -22,19 +22,35 @@ namespace RadialMenu
         public bool WasMenuChanged { get; private set; }
         public bool WasTargetChanged { get; private set; }
 
+        private MenuKind? previousActiveMenu;
         private MenuKind? suppressedMenu;
 
-        public void UpdateActiveMenu()
+        public bool CheckSuppressionState(out MenuKind? nextActiveMenu)
         {
-            WasMenuChanged = false;
-            var nextActiveMenu = GetNextActiveMenu();
+            nextActiveMenu = GetNextActiveMenu();
             if (suppressedMenu.HasValue)
             {
                 if (nextActiveMenu == suppressedMenu.Value)
                 {
-                    return;
+                    return true;
                 }
                 suppressedMenu = null;
+            }
+            return false;
+        }
+
+        public void RevertActiveMenu()
+        {
+            ActiveMenu = previousActiveMenu;
+            WasMenuChanged = false;
+        }
+
+        public void UpdateActiveMenu()
+        {
+            WasMenuChanged = false;
+            if (CheckSuppressionState(out var nextActiveMenu))
+            {
+                return;
             }
             // Fighting between menus would be distracting; instead do first-come, first-serve.
             // Whichever menu became active first, stays active until dismissed.
@@ -42,7 +58,7 @@ namespace RadialMenu
             {
                 return;
             }
-            var previousActiveMenu = ActiveMenu;
+            previousActiveMenu = ActiveMenu;
             ActiveMenu = nextActiveMenu;
             WasMenuChanged = ActiveMenu != previousActiveMenu;
         }
@@ -66,11 +82,15 @@ namespace RadialMenu
             };
         }
 
+        public void Reset()
+        {
+            ActiveMenu = null;
+            CurrentTarget = null;
+        }
+
         public void SuppressUntilTriggerRelease()
         {
             suppressedMenu = ActiveMenu;
-            ActiveMenu = null;
-            CurrentTarget = null;
         }
 
         private MenuKind? GetNextActiveMenu()

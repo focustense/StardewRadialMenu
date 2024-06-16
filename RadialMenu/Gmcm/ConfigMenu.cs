@@ -64,6 +64,21 @@ internal class ConfigMenu(
             "gmcm.controls.activation",
             getValue: () => Config.Activation,
             setValue: value => Config.Activation = value);
+        gmcm.AddNumberOption(
+            mod,
+            name: () => translations.Get("gmcm.controls.activation.delay"),
+            tooltip: () => translations.Get("gmcm.controls.activation.delay.tooltip"),
+            getValue: () => Config.ActivationDelayMs,
+            setValue: value => Config.ActivationDelayMs = value,
+            formatValue: value => translations.Get(
+                "gmcm.controls.activation.delay.value",
+                new { value }),
+            min: 0,
+            max: 500);
+        AddEnumOption(
+            "gmcm.controls.activation.delay.actions",
+            getValue: () => Config.DelayedActions,
+            setValue: value => Config.DelayedActions = value);
 
         gmcm.AddSectionTitle(
             mod,

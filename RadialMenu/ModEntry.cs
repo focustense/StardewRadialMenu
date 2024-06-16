@@ -5,6 +5,7 @@ using RadialMenu.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using System;
 using System.Reflection;
 
 namespace RadialMenu
@@ -27,7 +28,8 @@ namespace RadialMenu
         private TextureHelper textureHelper = null!;
         private KeybindActivator keybindActivator = null!;
         private PreMenuState preMenuState = null!;
-        private Action? pendingActivation;
+        private Func<DelayedActions?, ItemActivationResult>? pendingActivation;
+        private double remainingActivationDelayMs;
 
         public override void Entry(IModHelper helper)
         {
@@ -48,6 +50,16 @@ namespace RadialMenu
             helper.Events.Display.RenderedHud += Display_RenderedHud;
         }
 
+        private float GetSelectionBlend()
+        {
+            if (pendingActivation is null)
+            {
+                return 1.0f;
+            }
+            var elapsed = (float)(config.ActivationDelayMs - remainingActivationDelayMs);
+            return MathF.Abs(((elapsed / 80) % 2) - 1);
+        }
+
         [EventPriority(EventPriority.Low)]
         private void Display_RenderedHud(object? sender, RenderedHudEventArgs e)
         {
@@ -55,11 +67,13 @@ namespace RadialMenu
             {
                 return;
             }
+            var selectionBlend = GetSelectionBlend();
             painter.Paint(
                 e.SpriteBatch,
                 Game1.uiViewport,
                 cursor.CurrentTarget?.SelectedIndex ?? -1,
-                cursor.CurrentTarget?.Angle);
+                cursor.CurrentTarget?.Angle,
+                selectionBlend);
         }
 
         [EventPriority(EventPriority.Low - 10)]
@@ -86,41 +100,72 @@ namespace RadialMenu
             }
             if (pendingActivation is not null)
             {
-                pendingActivation.Invoke();
-                pendingActivation = null;
-                cursor.SuppressUntilTriggerRelease();
-                RestorePreMenuState();
+                cursor.CheckSuppressionState(out _);
+                // Delay filtering is slippery, because sometimes in order to know whether an item
+                // _will_ be consumed (vs. switched to), we just have to attempt it, i.e. using
+                // the performUserAction method.
+                //
+                // So what we can do is pass the delay parameter into the action itself, removing it
+                // once the delay is up; the action will abort if it matches the delay setting but
+                // proceed otherwise.
+                if (remainingActivationDelayMs > 0)
+                {
+                    remainingActivationDelayMs -= Game1.currentGameTime.ElapsedGameTime.TotalMilliseconds;
+                }
+                var activationResult = MaybeInvokePendingActivation();
+                if (activationResult != ItemActivationResult.Ignored && activationResult != ItemActivationResult.Delayed)
+                {
+                    pendingActivation = null;
+                    remainingActivationDelayMs = 0;
+                    cursor.Reset();
+                    RestorePreMenuState();
+                }
             }
         }
 
         private void GameLoop_UpdateTicking(object? sender, UpdateTickingEventArgs e)
         {
-            if (!Context.CanPlayerMove && cursor.ActiveMenu == null)
+            if (!Context.IsWorldReady)
             {
                 return;
             }
+
             cursor.GamePadState = GetRawGamePadState();
-            cursor.UpdateActiveMenu();
-            if (cursor.WasMenuChanged)
+            if (!Context.CanPlayerMove && cursor.ActiveMenu is null)
             {
-                if (cursor.ActiveMenu is not null)
-                {
-                    preMenuState = new(Game1.freezeControls);
-                    Game1.player.completelyStopAnimatingOrDoingAction();
-                    Game1.freezeControls = true;
-                }
-                else
-                {
-                    if (config.Activation == ItemActivationMethod.TriggerRelease)
-                    {
-                        pendingActivation = GetSelectedItemActivation();
-                    }
-                    RestorePreMenuState();
-                }
-                UpdateMenuItems(cursor.ActiveMenu);
-                painter.Items = activeMenuItems;
+                cursor.CheckSuppressionState(out _);
+                return;
             }
-            cursor.UpdateCurrentTarget(activeMenuItems.Count);
+
+            if (remainingActivationDelayMs <= 0)
+            {
+                cursor.UpdateActiveMenu();
+                if (cursor.WasMenuChanged)
+                {
+                    if (cursor.ActiveMenu is not null)
+                    {
+                        preMenuState = new(Game1.freezeControls);
+                        Game1.player.completelyStopAnimatingOrDoingAction();
+                        Game1.freezeControls = true;
+                    }
+                    else
+                    {
+                        if (config.Activation == ItemActivationMethod.TriggerRelease
+                            && cursor.CurrentTarget is not null)
+                        {
+                            cursor.RevertActiveMenu();
+                            ScheduleActivation();
+                        }
+                        else
+                        {
+                            RestorePreMenuState();
+                        }
+                    }
+                    UpdateMenuItems(cursor.ActiveMenu);
+                    painter.Items = activeMenuItems;
+                }
+                cursor.UpdateCurrentTarget(activeMenuItems.Count);
+            }
 
             // Here be dragons: because the triggers are analog values and SMAPI uses a deadzone,
             // it will race with Stardew (and usually lose), with the practical symptom being that
@@ -140,6 +185,7 @@ namespace RadialMenu
         private void Input_ButtonsChanged(object? sender, ButtonsChangedEventArgs e)
         {
             if (!Context.IsWorldReady
+                || remainingActivationDelayMs > 0
                 || cursor.ActiveMenu is null
                 || cursor.CurrentTarget is null
                 || config.Activation == ItemActivationMethod.TriggerRelease)
@@ -150,7 +196,7 @@ namespace RadialMenu
             {
                 if (IsActivationButton(button))
                 {
-                    pendingActivation = GetSelectedItemActivation();
+                    ScheduleActivation();
                     Helper.Input.Suppress(button);
                     return;
                 }
@@ -172,7 +218,7 @@ namespace RadialMenu
                 : new GamePadState();
         }
 
-        private Action? GetSelectedItemActivation()
+        private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation()
         {
             var itemIndex = cursor.CurrentTarget?.SelectedIndex;
             return itemIndex < activeMenuItems.Count
@@ -187,6 +233,21 @@ namespace RadialMenu
                 ItemActivationMethod.ThumbStickPress => cursor.IsThumbStickForActiveMenu(button),
                 _ => false,
             };
+        }
+
+        private ItemActivationResult MaybeInvokePendingActivation()
+        {
+            if (pendingActivation is null)
+            {
+                // We shouldn't actually hit this, since it's only called from conditional blocks
+                // that have already confirmed there's a pending activation.
+                // Nonetheless, for safety we assign a special result type to this, just in case the
+                // assumption gets broken later.
+                return ItemActivationResult.Ignored;
+            }
+            return remainingActivationDelayMs <= 0
+                ? pendingActivation.Invoke(null)
+                : pendingActivation.Invoke(config.DelayedActions);
         }
 
         private void LoadGmcmKeybindings()
@@ -258,6 +319,17 @@ namespace RadialMenu
         private void RestorePreMenuState()
         {
             Game1.freezeControls = preMenuState.WasFrozen;
+        }
+
+        private void ScheduleActivation()
+        {
+            pendingActivation = GetSelectedItemActivation();
+            if (pendingActivation is null)
+            {
+                return;
+            }
+            remainingActivationDelayMs = config.ActivationDelayMs;
+            cursor.SuppressUntilTriggerRelease();
         }
 
         private void ActivateCustomMenuItem(CustomMenuItemConfiguration item)

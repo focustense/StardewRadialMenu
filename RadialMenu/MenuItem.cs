@@ -12,7 +12,7 @@ namespace RadialMenu
         int? Quality,
         Texture2D Texture,
         Rectangle? SourceRectangle,
-        Action Activate);
+        Func<DelayedActions?, ItemActivationResult> Activate);
 
     internal class MenuItemBuilder(
         TextureHelper textureHelper,
@@ -39,7 +39,15 @@ namespace RadialMenu
                 /* Quality= */ null,
                 sprite.Texture,
                 sprite.SourceRect,
-                () => customItemActivator.Invoke(item));
+                delayedActions =>
+                {
+                    if (delayedActions == DelayedActions.All)
+                    {
+                        return ItemActivationResult.Delayed;
+                    }
+                    customItemActivator.Invoke(item);
+                    return ItemActivationResult.Custom;
+                });
         }
 
         public MenuItem GameItem(Item item, int itemIndex)
@@ -54,7 +62,7 @@ namespace RadialMenu
                 item.Quality,
                 texture,
                 sourceRect,
-                () => FuzzyActivation.ConsumeOrSelect(itemIndex));
+                delayedActions => FuzzyActivation.ConsumeOrSelect(itemIndex, delayedActions));
         }
     }
 }

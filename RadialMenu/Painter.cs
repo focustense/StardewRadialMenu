@@ -26,6 +26,7 @@ namespace RadialMenu
 
         private VertexPositionColor[] innerVertices = [];
         private VertexPositionColor[] outerVertices = [];
+        private float selectionBlend = 1.0f;
         private SelectionState selectionState = new(/* ItemCount= */ 0, /* SelectedIndex= */ 0);
 
         public Painter(GraphicsDevice graphicsDevice)
@@ -43,13 +44,15 @@ namespace RadialMenu
             SpriteBatch spriteBatch,
             TileRectangle viewport,
             int selectedIndex,
-            float? selectionAngle)
+            float? selectionAngle,
+            float selectionBlend = 1.0f)
         {
             GenerateVertices();
             var selectionState = new SelectionState(Items.Count, selectedIndex);
-            if (selectionState != this.selectionState)
+            if (selectionState != this.selectionState || selectionBlend != this.selectionBlend)
             {
                 this.selectionState = selectionState;
+                this.selectionBlend = selectionBlend;
                 UpdateVertexColors();
             }
             PaintBackgrounds(viewport, selectionAngle);
@@ -266,7 +269,9 @@ namespace RadialMenu
                     ? (i >= highlightStartSegment && i < highlightEndSegment)
                     : (i >= highlightStartSegment || i < highlightEndSegment);
                 var outerIndex = i * outerChordSize;
-                var outerColor = isHighlighted ? Color.RoyalBlue : Styles.OuterBackgroundColor;
+                var outerColor = isHighlighted
+                    ? Color.Lerp(Styles.OuterBackgroundColor, Styles.HighlightColor, selectionBlend)
+                    : Styles.OuterBackgroundColor;
                 for (var j = 0; j < outerChordSize; j++)
                 {
                     outerVertices[outerIndex + j].Color = outerColor;
