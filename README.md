@@ -2,15 +2,13 @@
 
 (aka: "Better Gamepads")
 
-[TOC]
-
 ## Introduction
 
 Stardew Valley has good controller support. *Good* - not *great*. Have you ever felt frustrated mashing the trigger buttons to get to the tool you want, trying to watch the little toolbar at the top/bottom of the screen while still paying attention to the center where all the action is happening, often ending up in the wrong place and accidentally pickaxing your crop instead of watering it? Or do you have a lot of mods and not enough buttons on your controller to actually use them all?
 
 If so, then this mod is for you. Radial menus, sometimes called [Pie Menus](https://en.wikipedia.org/wiki/Pie_menu), have been a staple of controller-based UI ever since the original [Secret of Mana](https://en.wikipedia.org/wiki/Secret_of_Mana) and maybe before. They're a great way to make complex inventory or action management accessible by gamepad, taking advantage of the most critical difference between a gamepad and a mouse: gamepads are *directional*, not *positional*. A radial menu only requires you to point in the direction of the item you want, rather than finding its exact position on screen, or (in the case of Stardew Valley) having to cycle through many items using modeless button presses.
 
-<img src="D:\Repo\StardewRadialMenu\docs\images\tool_menu_screenshot.png" alt="Screenshot - Tools" style="zoom: 67%;" />
+<img src="docs/images/tool_menu_screenshot.png" alt="Screenshot - Tools" style="zoom: 67%;" />
 
 The RadialMenu mod **replaces** the function of the left and right trigger buttons, so that instead of cycling through your current page of tools/items, they open up separate radial menus:
 
@@ -46,17 +44,15 @@ For a full list of all the configurable features, refer to [Configuration](#conf
 
 * Access not only your inventory via the menu, but also mod-added functions! Set up any list of shortcuts you want, with any actions you want.
 
-  > [!IMPORTANT]
-  >
-  > If you are installing RadialMenu for the first time, your list of shortcuts (custom actions) will be empty. A [complete example configuration](https://gist.github.com/focustense/b7022697cd9763059015d0edc30b746b) is available for your reference/inspiration. Or, refer to [Shortcut Settings](#custom-item-shortcut-settings) for more information on the specification, or use the in-game config menu to add and edit mod shortcuts.
+> [!IMPORTANT]
+> If you are installing RadialMenu for the first time, your list of shortcuts (custom actions) will be empty. A [complete example configuration](https://gist.github.com/focustense/b7022697cd9763059015d0edc30b746b) is available for your reference/inspiration. Or, refer to [Shortcut Settings](#custom-item-shortcut-settings) for more information on the specification, or use the in-game config menu to add and edit mod shortcuts.
 
 * Integration with [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098). You can experiment with different control schemes and also edit your list of shortcuts all from within the game.
 
-  > [!NOTE]
-  >
-  > GMCM does not natively support much of what RadialMenu needs to do in its config UI; therefore, RadialMenu pries into GMCM's internals quite a bit, and may break with future versions of GMCM.
-  >
-  > The latest _tested_ version of GMCM is 1.12.0. If you run into problems with RadialMenu's configuration using a newer version of GMCM, please file a bug report including the GMCM version, [SMAPI log](https://smapi.io/log) and a _detailed_ description of what you tried and what happened. It may be very difficult to fix a GMCM-related bug without all of the above information.
+> [!NOTE]
+> GMCM does not natively support much of what RadialMenu needs to do in its config UI; therefore, RadialMenu pries into GMCM's internals quite a bit, and may break with future versions of GMCM.
+>
+> The latest _tested_ version of GMCM is 1.12.0. If you run into problems with RadialMenu's configuration using a newer version of GMCM, please file a bug report including the GMCM version, [SMAPI log](https://smapi.io/log) and a _detailed_ description of what you tried and what happened. It may be very difficult to fix a GMCM-related bug without all of the above information.
 
   
 
@@ -165,13 +161,11 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
 * `Styles`: Controls the visual styles of the menu. If you don't like the default colors, or find that they clash with your game because you're using a mod to change the vanilla colors, then you can update these settings accordingly.
 
   * It is strongly recommended to use the GMCM UI for editing styles, as you'll get an instant preview of how the menu will look.
-    <img src="D:\Repo\StardewRadialMenu\docs\images\style_config_screenshot.png" alt="Style Config Screenshot" style="zoom: 40%;" />  
+    <img src="docs/images/style_config_screenshot.png" alt="Style Config Screenshot" style="zoom: 40%;" />  
 
-	  
-	  
-    > [!CAUTION]
-    >
-    > While the dimensions (radii, heights, etc.) can also be edited, it is not possible to test this mod with every possible combination of values. Most players should leave the non-color settings alone. If you've changed these values, especially to anything very far away from the defaults, and are running into broken UI or other visual glitches, please *do not* file a bug.
+> [!CAUTION]
+>
+> While the dimensions (radii, heights, etc.) can also be edited, it is not possible to test this mod with every possible combination of values. Most players should leave the non-color settings alone. If you've changed these values, especially to anything very far away from the defaults, and are running into broken UI or other visual glitches, please *do not* file a bug.
 
 ### Custom Item (Shortcut) Settings
 
@@ -207,9 +201,9 @@ Each custom item in the `CustomMenuItems` list has its own properties defining h
 
   * `FieldId` is mainly used for internal tracking, and players should generally ignore it because the values aren't stable unless the author of the other mod has used custom IDs.
 
-  * > [!NOTE]
-    >
-    > Uninstalling the other mod, or having it go out of sync due to a new version of the other mod that changes its options, will _not_ cause your shortcut to disappear or stop working; it will simply stop updating its information to match the other mod's settings. If this happens, you can fix it by changing the `FieldName` to its (new) correct value.
+> [!NOTE]
+>
+> Uninstalling the mod referenced by a GMCM association, or having it go out of sync due to a new version of the other mod that changes its options, will _not_ cause your shortcut to disappear or stop working; it will simply stop updating its information to match the other mod's settings. If this happens, you can fix it by changing the `FieldName` to its (new) correct value.
 
     
 
