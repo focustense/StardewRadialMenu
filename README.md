@@ -217,6 +217,7 @@ Each custom item in the `CustomMenuItems` list has its own properties defining h
 
 * Radial menu triggers are **only enabled during normal gameplay**; they are disabled when other menus are open. This is an intentional design decision, since the left/right triggers are normally to be used to control pagination or other navigation within the menu, and blocking those inputs to show the radial menu could interfere with normal navigation without providing any alternative.
 * Specifying a flooring ID like `(FL)0` for a custom item image will cause wallpaper to be drawn instead. This is a bug in the game code itself (1.6.8), has been reported and will be fixed in a future version.
+* Mouse/keyboard inputs are not supported, and likely never will be. This mod is meant to improve gameplay with a game controller, and there's no real reason to use it without one since keyboards can already bind a nearly unlimited number of hotkeys.
 
 ## Questions/Bugs?
 
