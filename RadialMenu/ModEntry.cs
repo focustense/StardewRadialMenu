@@ -30,6 +30,8 @@ public class ModEntry : Mod
     private KeybindActivator keybindActivator = null!;
     private PreMenuState preMenuState = null!;
     private Func<DelayedActions?, ItemActivationResult>? pendingActivation;
+    // Track delay state so we don't keep trying to activate the item.
+    private bool isActivationDelayed;
     private double remainingActivationDelayMs;
 
     public override void Entry(IModHelper helper)
@@ -114,7 +116,8 @@ public class ModEntry : Mod
                 remainingActivationDelayMs -= Game1.currentGameTime.ElapsedGameTime.TotalMilliseconds;
             }
             var activationResult = MaybeInvokePendingActivation();
-            if (activationResult != ItemActivationResult.Ignored && activationResult != ItemActivationResult.Delayed)
+            if (activationResult != ItemActivationResult.Ignored
+                && activationResult != ItemActivationResult.Delayed)
             {
                 pendingActivation = null;
                 remainingActivationDelayMs = 0;
@@ -238,9 +241,19 @@ public class ModEntry : Mod
             // assumption gets broken later.
             return ItemActivationResult.Ignored;
         }
-        return remainingActivationDelayMs <= 0
+        if (isActivationDelayed && remainingActivationDelayMs > 0)
+        {
+            return ItemActivationResult.Delayed;
+        }
+        var result = remainingActivationDelayMs <= 0
             ? pendingActivation.Invoke(null)
             : pendingActivation.Invoke(config.DelayedActions);
+        if (result == ItemActivationResult.Delayed)
+        {
+            Game1.playSound("select");
+            isActivationDelayed = true;
+        }
+        return result;
     }
 
     private void LoadGmcmKeybindings()
@@ -317,12 +330,12 @@ public class ModEntry : Mod
 
     private void ScheduleActivation()
     {
+        isActivationDelayed = false;
         pendingActivation = GetSelectedItemActivation();
         if (pendingActivation is null)
         {
             return;
         }
-        Game1.playSound("select");
         remainingActivationDelayMs = config.ActivationDelayMs;
         cursor.SuppressUntilTriggerRelease();
     }
