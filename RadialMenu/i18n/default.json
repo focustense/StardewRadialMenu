@@ -24,6 +24,8 @@
   "gmcm.controls.activation.delay.actions.tooltip": "Limit which actions get delayed. Since actions other than tool-switching (e.g. eating food, using warp totem, etc.) play their own animations, the delay usually isn't necessary for those.",
   "gmcm.controls.activation.delay.actions.all": "All Actions",
   "gmcm.controls.activation.delay.actions.toolswitch": "Only Tool Selection",
+  "gmcm.controls.select.button": "Tool Select Button",
+  "gmcm.controls.select.button.tooltip": "Choose a separate button to force tool selection, even if the item has a quick action. Used for gifting consumable items, or putting them into machines.",
   "gmcm.inventory": "Inventory Menu",
   "gmcm.inventory.max": "Max Items",
   "gmcm.inventory.max.tooltip": "Maximum number of items to show in the inventory menu. Empty slots are counted against the limit, but not displayed.",

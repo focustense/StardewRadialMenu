@@ -158,7 +158,7 @@ public class ModEntry : Mod
                         && cursor.CurrentTarget is not null)
                     {
                         cursor.RevertActiveMenu();
-                        ScheduleActivation();
+                        ScheduleActivation(/* forceSelect= */ false);
                     }
                     else
                     {
@@ -191,16 +191,21 @@ public class ModEntry : Mod
         if (!Context.IsWorldReady
             || remainingActivationDelayMs > 0
             || cursor.ActiveMenu is null
-            || cursor.CurrentTarget is null
-            || config.Activation == ItemActivationMethod.TriggerRelease)
+            || cursor.CurrentTarget is null)
         {
             return;
         }
         foreach (var button in e.Pressed)
         {
-            if (IsActivationButton(button))
+            if (button == config.SelectButton)
             {
-                ScheduleActivation();
+                ScheduleActivation(/* forceSelect= */ true);
+                Helper.Input.Suppress(button);
+                return;
+            }
+            else if (IsActivationButton(button))
+            {
+                ScheduleActivation(/* forceSelect= */ false);
                 Helper.Input.Suppress(button);
                 return;
             }
@@ -214,11 +219,13 @@ public class ModEntry : Mod
             : new GamePadState();
     }
 
-    private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation()
+    private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation(bool forceSelect)
     {
         var itemIndex = cursor.CurrentTarget?.SelectedIndex;
         return itemIndex < activeMenuItems.Count
-            ? activeMenuItems[itemIndex.Value].Activate : null;
+            ? (delayedActions) => activeMenuItems[itemIndex.Value]
+                .Activate(delayedActions, forceSelect)
+            : null;
     }
 
     private bool IsActivationButton(SButton button)
@@ -328,10 +335,10 @@ public class ModEntry : Mod
         Game1.freezeControls = preMenuState.WasFrozen;
     }
 
-    private void ScheduleActivation()
+    private void ScheduleActivation(bool forceSelect)
     {
         isActivationDelayed = false;
-        pendingActivation = GetSelectedItemActivation();
+        pendingActivation = GetSelectedItemActivation(forceSelect);
         if (pendingActivation is null)
         {
             return;

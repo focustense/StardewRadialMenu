@@ -1,4 +1,6 @@
-﻿namespace RadialMenu.Config;
+﻿using StardewModdingAPI;
+
+namespace RadialMenu.Config;
 
 public class Configuration : ICursorConfiguration
 {
@@ -50,6 +52,15 @@ public class Configuration : ICursorConfiguration
     /// the item activation completes.
     /// </summary>
     public int ActivationDelayMs { get; set; } = 250;
+
+    /// <summary>
+    /// Force-selection button which always selects the focused item as a tool, instead of
+    /// performing its quick action (if there is one).
+    /// </summary>
+    /// <remarks>
+    /// Used for gifting consumable items or putting them into machines.
+    /// </remarks>
+    public SButton SelectButton { get; set; } = SButton.ControllerX;
 
     /// <summary>
     /// Specifies which types of actions should receive the <see cref="ActivationDelayMs"/>.

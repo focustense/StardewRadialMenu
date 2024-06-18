@@ -89,6 +89,12 @@ internal class ConfigMenu(
             "gmcm.controls.activation.delay.actions",
             getValue: () => Config.DelayedActions,
             setValue: value => Config.DelayedActions = value);
+        gmcm.AddKeybind(
+            mod,
+            name: () => translations.Get("gmcm.controls.select.button"),
+            tooltip: () => translations.Get("gmcm.controls.select.button.tooltip"),
+            getValue: () => Config.SelectButton,
+            setValue: value => Config.SelectButton = value);
 
         gmcm.AddSectionTitle(
             mod,
