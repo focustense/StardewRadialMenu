@@ -71,6 +71,7 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
   "ThumbStickDeadZone": 0.2,
   "Activation": "ActionButtonPress",
   "ActivationDelayMs": 250,
+  "SelectButton": "ControllerX",
   "DelayedActions": "ToolSwitch",
   "MaxInventoryItems": 12,
   "CustomMenuItems": [
@@ -154,6 +155,7 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
   * `All`: Apply the delay to all actions, period; anything you select from either menu will have the configured delay.
   * `ToolSwitch`: Only apply the delay to item _selection_ or "tool switches". If an item has a use-action associated with it, such as food/drinks, totems, staircases, etc., or shortcuts in the Custom menu, it will not receive the delay.
 
+* `SelectButton`: Alternate button to the `Activation` method which always selects the item, i.e. makes it the "held" item, even if it is consumable and/or has a quick action. Used whenever you want to gift an item to an NPC, or put it into a machine, and so on.
 * `MaxInventoryItems`: Maximum number of items to show in the Inventory menu. The default is 12, which is intended for game balance, allowing you to access the same number of items as you would without the mod using normal L/R trigger cycling. You can set this to any positive number; however, values above 24 are likely to look bad (e.g. overlapping text) and may make it harder to "hit" any given menu item. Most players should keep this at 12.
 
 * `CustomMenuItems`: The shortcuts that appear in the Custom (default: right-trigger) menu. See the next section.
@@ -205,7 +207,7 @@ Each custom item in the `CustomMenuItems` list has its own properties defining h
 >
 > Uninstalling the mod referenced by a GMCM association, or having it go out of sync due to a new version of the other mod that changes its options, will _not_ cause your shortcut to disappear or stop working; it will simply stop updating its information to match the other mod's settings. If this happens, you can fix it by changing the `FieldName` to its (new) correct value.
 
-    
+​    
 
 ## Limitations/Known Issues
 
