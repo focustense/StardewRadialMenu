@@ -72,8 +72,24 @@ internal class ConfigMenu(
             max: 1.0f);
         AddEnumOption(
             "gmcm.controls.activation",
-            getValue: () => Config.Activation,
-            setValue: value => Config.Activation = value);
+            getValue: () => Config.PrimaryActivation,
+            setValue: value => Config.PrimaryActivation = value);
+        AddEnumOption(
+            "gmcm.controls.action.primary",
+            "gmcm.controls.action.type",
+            () => Config.PrimaryAction,
+            value => Config.PrimaryAction = value);
+        gmcm.AddKeybind(
+            mod,
+            name: () => translations.Get("gmcm.controls.action.secondary.button"),
+            tooltip: () => translations.Get("gmcm.controls.action.secondary.button.tooltip"),
+            getValue: () => Config.SecondaryActionButton,
+            setValue: value => Config.SecondaryActionButton = value);
+        AddEnumOption(
+            "gmcm.controls.action.secondary",
+            "gmcm.controls.action.type",
+            () => Config.SecondaryAction,
+            value => Config.SecondaryAction = value);
         gmcm.AddNumberOption(
             mod,
             name: () => translations.Get("gmcm.controls.activation.delay"),
@@ -89,12 +105,6 @@ internal class ConfigMenu(
             "gmcm.controls.activation.delay.actions",
             getValue: () => Config.DelayedActions,
             setValue: value => Config.DelayedActions = value);
-        gmcm.AddKeybind(
-            mod,
-            name: () => translations.Get("gmcm.controls.select.button"),
-            tooltip: () => translations.Get("gmcm.controls.select.button.tooltip"),
-            getValue: () => Config.SelectButton,
-            setValue: value => Config.SelectButton = value);
 
         gmcm.AddSectionTitle(
             mod,
@@ -131,6 +141,16 @@ internal class ConfigMenu(
         Action<T> setValue)
     where T : struct, Enum
     {
+        AddEnumOption(messageId, messageId, getValue, setValue);
+    }
+
+    private void AddEnumOption<T>(
+        string messageId,
+        string choiceIdPrefix,
+        Func<T> getValue,
+        Action<T> setValue)
+    where T : struct, Enum
+    {
         gmcm.AddTextOption(
             mod,
             name: () => translations.Get(messageId),
@@ -140,6 +160,6 @@ internal class ConfigMenu(
             allowedValues: Enum.GetValues<T>()
                 .Select(e => e.ToString().ToLowerInvariant())
                 .ToArray(),
-            formatAllowedValue: value => translations.Get($"{messageId}.{value}"));
+            formatAllowedValue: value => translations.Get($"{choiceIdPrefix}.{value}"));
     }
 }

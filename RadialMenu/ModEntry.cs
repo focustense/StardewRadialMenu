@@ -154,11 +154,11 @@ public class ModEntry : Mod
                 }
                 else
                 {
-                    if (config.Activation == ItemActivationMethod.TriggerRelease
+                    if (config.PrimaryActivation == ItemActivationMethod.TriggerRelease
                         && cursor.CurrentTarget is not null)
                     {
                         cursor.RevertActiveMenu();
-                        ScheduleActivation(/* forceSelect= */ false);
+                        ScheduleActivation(/* forceSelect= */ config.PrimaryAction);
                     }
                     else
                     {
@@ -197,15 +197,15 @@ public class ModEntry : Mod
         }
         foreach (var button in e.Pressed)
         {
-            if (button == config.SelectButton)
+            if (button == config.SecondaryActionButton)
             {
-                ScheduleActivation(/* forceSelect= */ true);
+                ScheduleActivation(/* forceSelect= */ config.SecondaryAction);
                 Helper.Input.Suppress(button);
                 return;
             }
             else if (IsActivationButton(button))
             {
-                ScheduleActivation(/* forceSelect= */ false);
+                ScheduleActivation(/* forceSelect= */ config.PrimaryAction);
                 Helper.Input.Suppress(button);
                 return;
             }
@@ -219,18 +219,19 @@ public class ModEntry : Mod
             : new GamePadState();
     }
 
-    private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation(bool forceSelect)
+    private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation(
+        ItemAction preferredAction)
     {
         var itemIndex = cursor.CurrentTarget?.SelectedIndex;
         return itemIndex < activeMenuItems.Count
             ? (delayedActions) => activeMenuItems[itemIndex.Value]
-                .Activate(delayedActions, forceSelect)
+                .Activate(delayedActions, preferredAction)
             : null;
     }
 
     private bool IsActivationButton(SButton button)
     {
-        return config.Activation switch
+        return config.PrimaryActivation switch
         {
             ItemActivationMethod.ActionButtonPress => button.IsActionButton(),
             ItemActivationMethod.ThumbStickPress => cursor.IsThumbStickForActiveMenu(button),
@@ -335,10 +336,10 @@ public class ModEntry : Mod
         Game1.freezeControls = preMenuState.WasFrozen;
     }
 
-    private void ScheduleActivation(bool forceSelect)
+    private void ScheduleActivation(ItemAction preferredAction)
     {
         isActivationDelayed = false;
-        pendingActivation = GetSelectedItemActivation(forceSelect);
+        pendingActivation = GetSelectedItemActivation(preferredAction);
         if (pendingActivation is null)
         {
             return;

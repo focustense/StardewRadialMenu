@@ -43,24 +43,32 @@ public class Configuration : ICursorConfiguration
     public float ThumbStickDeadZone { get; set; } = 0.2f;
 
     /// <summary>
-    /// How to activate the selected item; refer to <see cref="ItemActivationMethod"/>.
+    /// What action to perform when <see cref="PrimaryActivation"/> is used.
     /// </summary>
-    public ItemActivationMethod Activation { get; set; }
+    public ItemAction PrimaryAction { get; set; } = ItemAction.Use;
+
+    /// <summary>
+    /// How to perform the <see cref="PrimaryAction"/> on the selected item; refer to
+    /// <see cref="ItemActivationMethod"/>.
+    /// </summary>
+    public ItemActivationMethod PrimaryActivation { get; set; } =
+        ItemActivationMethod.ActionButtonPress;
+
+    /// <summary>
+    /// What action to perform when the <see cref="SecondaryActionButton"/> is pressed.
+    /// </summary>
+    public ItemAction SecondaryAction { get; set; } = ItemAction.Select;
+
+    /// <summary>
+    /// How to perform the <see cref="SecondaryAction"/> on the selected item.
+    /// </summary>
+    public SButton SecondaryActionButton { get; set; } = SButton.ControllerX;
 
     /// <summary>
     /// Duration to hold the menu open (ignoring further inputs, and with gameplay paused) before
     /// the item activation completes.
     /// </summary>
     public int ActivationDelayMs { get; set; } = 250;
-
-    /// <summary>
-    /// Force-selection button which always selects the focused item as a tool, instead of
-    /// performing its quick action (if there is one).
-    /// </summary>
-    /// <remarks>
-    /// Used for gifting consumable items or putting them into machines.
-    /// </remarks>
-    public SButton SelectButton { get; set; } = SButton.ControllerX;
 
     /// <summary>
     /// Specifies which types of actions should receive the <see cref="ActivationDelayMs"/>.

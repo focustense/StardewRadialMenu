@@ -12,7 +12,7 @@ namespace RadialMenu
         int? Quality,
         Texture2D? Texture,
         Rectangle? SourceRectangle,
-        Func<DelayedActions?, bool, ItemActivationResult> Activate);
+        Func<DelayedActions?, ItemAction, ItemActivationResult> Activate);
 
     internal class MenuItemBuilder(
         TextureHelper textureHelper,
@@ -62,8 +62,8 @@ namespace RadialMenu
                 item.Quality,
                 texture,
                 sourceRect,
-                (delayedActions, forceSelect) =>
-                    FuzzyActivation.ConsumeOrSelect(itemIndex, delayedActions, forceSelect));
+                (delayedActions, preferredAction) =>
+                    FuzzyActivation.ConsumeOrSelect(itemIndex, delayedActions, preferredAction));
         }
     }
 }

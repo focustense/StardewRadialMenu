@@ -128,38 +128,36 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
 ### Main Settings
 
 * `TriggerDeadZone`: How far the left/right triggers have to be pressed in before the menu will show. Valid values are between 0 and 1. The default of 0.2 should be comfortable for most players, preventing accidental triggers without making the menu awkward to activate or hold open.
-
 * `SwapTriggers`: Switches the trigger used to open each menu. Normally, the left trigger opens the Inventory (Tools) menu and the right trigger opens the Custom (Shortcuts) menu. If you enable this option, left/right will be switched.
-
 * `ThumbStickPreference`: Controls which controller thumbstick will control the selection in an active menu. Valid values are:
 
   * `AlwaysLeft` - left analog stick controls both radial menus.
   * `AlwaysRight` - right analog stick controls both radial menus.
   * `SameAsTrigger` - left stick controls the left-trigger menu, right stick controls the right-trigger menu.
-
 * `ThumbStickDeadZone`: Same as `TriggerDeadZone`, but applies to the left/right analog sticks while a menu is active.
+* `PrimaryAction`: The action to perform on `PrimaryActivation` (see below). Valid values are:
+  * `Select`: Always selects the item as a tool - i.e. makes it the "held item", regardless of whether or not it has any quick action. Used whenever you want to gift an item to an NPC, or put it into a machine, and so on.
+  * `Use`: Automatically consume the item and performs its quick-action or use-action if there is one, such as eating food, warping with a warp totem, or using a staircase to go to the next floor. If the specific item has no use action, it will act the same as `Select`.
 
-* `Activation`: How to actually "click" on a menu item when it's highlighted. Valid values are:
-
+* `PrimaryActivation`: How to perform the primary action on a highlighted menu item. Valid values are:
   * `ActionButtonPress`: Press whichever button you normally use to interact with the world; typically the "A" button.
   * `ThumbStickPress`: Press down on whichever thumbstick is being used to control the active menu; see also `ThumbStickPreference` above.
   * `TriggerRelease`: Release the trigger button that was used to open the menu in order to activate whichever item was last highlighted.
+* `SecondaryAction`: Alternate action to perform on the `SecondaryActionButton` press; has the same option as `PrimaryAction`. Typically, this should be whichever action is *not* the primary.
+* `SecondaryActionButton`: Button to activate the configured `SecondaryAction`.
+  * Note that due to limitations of GMCM, you can't set this using the in-game menu to be the primary action button (the one associated with `PrimaryActivation.ActionButtonPress`, typically "ControllerA"). However, you _can_ set it to this in the `config.json`, and it will work correctly if you are using a different method for primary activation such as trigger release.
+  * Of course, you can set it to any other button as well.
 
 * `ActivationDelayMs`: Waits a specified delay, in milliseconds, before performing the action you select. During this time, the menu stays open (confirming your selection) and the game stays paused. This helps most players avoid accidental game inputs from using the menu.
 
   * For example, if you are holding the left stick up to select the top item, and don't want the character to start walking upward immediately after a click, the default value of 250 ms means you have 1/4 of a second to release the stick in order to avoid that directional movement.
   * Every player has different reaction times, so you should experiment with this setting to find the value that works best for you. The GMCM UI sets a limit of 500 ms, but you can edit the `config.json` to have any positive value. You can also set it as low as 0 to eliminate any delay, if your priority is responsiveness and you don't care about a bit of "character drift".
-
 * `DelayedActions`: Lets you specify _which_ menu actions will receive the delay assigned to `ActivationDelayMs`. Only applicable if the delay is non-zero (obviously). This setting exists because most in-game actions (warp totems, horse whistle, etc.) will play some animation and thus *already* apply a delay, so any additional delay may not feel useful. The two settings are:
 
   * `All`: Apply the delay to all actions, period; anything you select from either menu will have the configured delay.
   * `ToolSwitch`: Only apply the delay to item _selection_ or "tool switches". If an item has a use-action associated with it, such as food/drinks, totems, staircases, etc., or shortcuts in the Custom menu, it will not receive the delay.
-
-* `SelectButton`: Alternate button to the `Activation` method which always selects the item, i.e. makes it the "held" item, even if it is consumable and/or has a quick action. Used whenever you want to gift an item to an NPC, or put it into a machine, and so on.
 * `MaxInventoryItems`: Maximum number of items to show in the Inventory menu. The default is 12, which is intended for game balance, allowing you to access the same number of items as you would without the mod using normal L/R trigger cycling. You can set this to any positive number; however, values above 24 are likely to look bad (e.g. overlapping text) and may make it harder to "hit" any given menu item. Most players should keep this at 12.
-
 * `CustomMenuItems`: The shortcuts that appear in the Custom (default: right-trigger) menu. See the next section.
-
 * `Styles`: Controls the visual styles of the menu. If you don't like the default colors, or find that they clash with your game because you're using a mod to change the vanilla colors, then you can update these settings accordingly.
 
   * It is strongly recommended to use the GMCM UI for editing styles, as you'll get an instant preview of how the menu will look.

@@ -11,7 +11,7 @@ namespace RadialMenu
         public static ItemActivationResult ConsumeOrSelect(
             int itemIndex,
             DelayedActions? delayedActions = null,
-            bool forceSelect = false)
+            ItemAction preferredAction = ItemAction.Use)
         {
             if (delayedActions == DelayedActions.All)
             {
@@ -20,7 +20,7 @@ namespace RadialMenu
             var item = itemIndex >= 0 && itemIndex < Game1.player.Items.Count
                 ? Game1.player.Items[itemIndex]
                 : null;
-            if (item is null || (!forceSelect && TryConsume(item)))
+            if (item is null || (preferredAction == ItemAction.Use && TryConsume(item)))
             {
                 return ItemActivationResult.Consumed;
             }
