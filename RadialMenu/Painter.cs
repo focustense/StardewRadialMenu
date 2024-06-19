@@ -2,8 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using RadialMenu.Config;
 using StardewValley;
-using System.Globalization;
-using System.Text;
 using TileRectangle = xTile.Dimensions.Rectangle;
 
 namespace RadialMenu;
@@ -156,7 +154,18 @@ internal class Painter
                     3f,
                     SpriteEffects.None,
                     -0.0001f);
-                spriteBatch.Draw(item.Texture, destinationRect, item.SourceRectangle, Color.White);
+                // Tinting may be an overlay sprite, or a tint of the original sprite. In here, we
+                // determine that by the nullness of both the rectangle and color. If a tint color
+                // is specified, but no separate rectangle, then it means we need to tint the base
+                // sprite since no overlay will be drawn; otherwise, draw the base normally.
+                var baseColor = item.TintRectangle is null
+                    ? (item.TintColor ?? Color.White)
+                    : Color.White;
+                spriteBatch.Draw(item.Texture, destinationRect, item.SourceRectangle, baseColor);
+                if (item.TintRectangle is Rectangle tintRect && item.TintColor is Color tintColor)
+                {
+                    spriteBatch.Draw(item.Texture, destinationRect, tintRect, tintColor);
+                }
             }
             if (item.Quality is int quality && quality > 0)
             {
@@ -219,7 +228,14 @@ internal class Painter
         var itemPos =
             new Vector2(centerX - itemDrawSize.X / 2, centerY - itemDrawSize.Y - 24);
         var itemRect = new Rectangle(itemPos.ToPoint(), itemDrawSize);
-        spriteBatch.Draw(item.Texture, itemRect, item.SourceRectangle, Color.White);
+        var baseColor = item.TintRectangle is null
+                    ? (item.TintColor ?? Color.White)
+                    : Color.White;
+        spriteBatch.Draw(item.Texture, itemRect, item.SourceRectangle, baseColor);
+        if (item.TintRectangle is Rectangle tintRect && item.TintColor is Color tintColor)
+        {
+            spriteBatch.Draw(item.Texture, itemRect, tintRect, tintColor);
+        }
 
         var labelFont = Game1.dialogueFont;
         var labelSize = labelFont.MeasureString(item.Title);
@@ -229,7 +245,9 @@ internal class Painter
         var descriptionFont = Game1.smallFont;
         var descriptionText = item.Description;
         var descriptionY = labelPos.Y + labelFont.LineSpacing + 16.0f;
-        foreach (var descriptionLine in WrapText(descriptionFont, descriptionText, 400))
+        var descriptionLines = Game1.parseText(descriptionText, descriptionFont, 400)
+            .Split(Environment.NewLine);
+        foreach (var descriptionLine in descriptionLines)
         {
             var descriptionSize = descriptionFont.MeasureString(descriptionLine);
             var descriptionPos = new Vector2(centerX - descriptionSize.X / 2.0f, descriptionY);
@@ -394,36 +412,5 @@ internal class Painter
         }
         isMonogram = false;
         return item.SourceRectangle?.Size ?? new Point(item.Texture.Width, item.Texture.Height);
-    }
-
-    private static IEnumerable<string> WrapText(
-        SpriteFont font,
-        string text,
-        float maxLineWidth)
-    {
-        var words = text.Split(' ');
-        var sb = new StringBuilder();
-        var lineWidth = 0f;
-        var spaceWidth = font.MeasureString(" ").X;
-        foreach (string word in words)
-        {
-            var size = font.MeasureString(word);
-            if (lineWidth + size.X < maxLineWidth)
-            {
-                sb.Append(word + " ");
-                lineWidth += size.X + spaceWidth;
-            }
-            else
-            {
-                yield return sb.ToString();
-                sb.Clear();
-                sb.Append(word + " ");
-                lineWidth = size.X + spaceWidth;
-            }
-        }
-        if (sb.Length > 0)
-        {
-            yield return sb.ToString();
-        }
     }
 }
