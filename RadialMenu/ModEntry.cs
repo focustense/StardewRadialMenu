@@ -4,18 +4,61 @@ using RadialMenu.Config;
 using RadialMenu.Gmcm;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using System.Reflection;
 
 namespace RadialMenu;
-
-record PreMenuState(bool WasFrozen);
 
 public class ModEntry : Mod
 {
     private const string GMCM_MOD_ID = "spacechase0.GenericModConfigMenu";
     private const string GMCM_OPTIONS_MOD_ID = "jltaylor-us.GMCMOptions";
 
+    private readonly PerScreen<PlayerState> playerState;
+    // Painter doesn't actually need to be per-screen in order to have correct output, but it does
+    // some caching related to its current items/selection, so giving the same painter inputs from
+    // different players would slow performance for both of them.
+    private readonly PerScreen<Painter> painter;
+
+    // Wrappers around PlayerState fields
+    internal PlayerState PlayerState => playerState.Value;
+
+    internal Cursor Cursor => PlayerState.Cursor;
+
+    internal PreMenuState PreMenuState
+    {
+        get => PlayerState.PreMenuState;
+        set => PlayerState.PreMenuState = value;
+    }
+
+    internal IReadOnlyList<MenuItem> ActiveMenuItems
+    {
+        get => PlayerState.ActiveMenuItems;
+        set => PlayerState.ActiveMenuItems = value;
+    }
+
+    internal Func<DelayedActions?, ItemActivationResult>? PendingActivation
+    {
+        get => PlayerState.PendingActivation;
+        set => PlayerState.PendingActivation = value;
+    }
+
+    internal bool IsActivationDelayed
+    {
+        get => PlayerState.IsActivationDelayed;
+        set => PlayerState.IsActivationDelayed = value;
+    }
+
+    internal double RemainingActivationDelayMs
+    {
+        get => PlayerState.RemainingActivationDelayMs;
+        set => PlayerState.RemainingActivationDelayMs = value;
+    }
+
+    internal Painter Painter => painter.Value;
+
+    // Global state
     private Configuration config = null!;
     private ConfigMenu? configMenu;
     private IGenericModMenuConfigApi? configMenuApi;
@@ -23,26 +66,21 @@ public class ModEntry : Mod
     private GenericModConfigKeybindings? gmcmKeybindings;
     private GenericModConfigSync? gmcmSync;
     private MenuItemBuilder menuItemBuilder = null!;
-    private IReadOnlyList<MenuItem> activeMenuItems = [];
-    private Cursor cursor = null!;
-    private Painter painter = null!;
     private TextureHelper textureHelper = null!;
     private KeybindActivator keybindActivator = null!;
-    private PreMenuState preMenuState = null!;
-    private Func<DelayedActions?, ItemActivationResult>? pendingActivation;
-    // Track delay state so we don't keep trying to activate the item.
-    private bool isActivationDelayed;
-    private double remainingActivationDelayMs;
+
+    public ModEntry()
+    {
+        playerState = new(CreatePlayerState);
+        painter = new(CreatePainter);
+    }
 
     public override void Entry(IModHelper helper)
     {
         config = Helper.ReadConfig<Configuration>();
         textureHelper = new(Helper.GameContent, Monitor);
         menuItemBuilder = new(textureHelper, ActivateCustomMenuItem);
-        cursor = new(() => config);
-        painter = new(Game1.graphics.GraphicsDevice, () => config.Styles);
         keybindActivator = new(helper.Input);
-        preMenuState = new(Game1.freezeControls);
 
         helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
         // For optimal latency: handle input before the Update loop, perform actions/rendering after.
@@ -54,27 +92,27 @@ public class ModEntry : Mod
 
     private float GetSelectionBlend()
     {
-        if (pendingActivation is null)
+        if (PendingActivation is null)
         {
             return 1.0f;
         }
-        var elapsed = (float)(config.ActivationDelayMs - remainingActivationDelayMs);
+        var elapsed = (float)(config.ActivationDelayMs - RemainingActivationDelayMs);
         return MathF.Abs(((elapsed / 80) % 2) - 1);
     }
 
     [EventPriority(EventPriority.Low)]
     private void Display_RenderedHud(object? sender, RenderedHudEventArgs e)
     {
-        if (cursor.ActiveMenu is null)
+        if (Cursor.ActiveMenu is null)
         {
             return;
         }
         var selectionBlend = GetSelectionBlend();
-        painter.Paint(
+        Painter.Paint(
             e.SpriteBatch,
             Game1.uiViewport,
-            cursor.CurrentTarget?.SelectedIndex ?? -1,
-            cursor.CurrentTarget?.Angle,
+            Cursor.CurrentTarget?.SelectedIndex ?? -1,
+            Cursor.CurrentTarget?.Angle,
             selectionBlend);
     }
 
@@ -93,17 +131,17 @@ public class ModEntry : Mod
         {
             return;
         }
-        if (cursor.WasMenuChanged && cursor.ActiveMenu != null)
+        if (Cursor.WasMenuChanged && Cursor.ActiveMenu != null)
         {
             Game1.playSound("shwip");
         }
-        else if (cursor.WasTargetChanged && cursor.CurrentTarget != null)
+        else if (Cursor.WasTargetChanged && Cursor.CurrentTarget != null)
         {
             Game1.playSound("smallSelect");
         }
-        if (pendingActivation is not null)
+        if (PendingActivation is not null)
         {
-            cursor.CheckSuppressionState(out _);
+            Cursor.CheckSuppressionState(out _);
             // Delay filtering is slippery, because sometimes in order to know whether an item
             // _will_ be consumed (vs. switched to), we just have to attempt it, i.e. using the
             // performUseAction method.
@@ -111,17 +149,17 @@ public class ModEntry : Mod
             // So what we can do is pass the delay parameter into the action itself, removing it
             // once the delay is up; the action will abort if it matches the delay setting but
             // proceed otherwise.
-            if (remainingActivationDelayMs > 0)
+            if (RemainingActivationDelayMs > 0)
             {
-                remainingActivationDelayMs -= Game1.currentGameTime.ElapsedGameTime.TotalMilliseconds;
+                RemainingActivationDelayMs -= Game1.currentGameTime.ElapsedGameTime.TotalMilliseconds;
             }
             var activationResult = MaybeInvokePendingActivation();
             if (activationResult != ItemActivationResult.Ignored
                 && activationResult != ItemActivationResult.Delayed)
             {
-                pendingActivation = null;
-                remainingActivationDelayMs = 0;
-                cursor.Reset();
+                PendingActivation = null;
+                RemainingActivationDelayMs = 0;
+                Cursor.Reset();
                 RestorePreMenuState();
             }
         }
@@ -134,30 +172,30 @@ public class ModEntry : Mod
             return;
         }
 
-        cursor.GamePadState = GetRawGamePadState();
-        if (!Context.CanPlayerMove && cursor.ActiveMenu is null)
+        Cursor.GamePadState = GetRawGamePadState();
+        if (!Context.CanPlayerMove && Cursor.ActiveMenu is null)
         {
-            cursor.CheckSuppressionState(out _);
+            Cursor.CheckSuppressionState(out _);
             return;
         }
 
-        if (remainingActivationDelayMs <= 0)
+        if (RemainingActivationDelayMs <= 0)
         {
-            cursor.UpdateActiveMenu();
-            if (cursor.WasMenuChanged)
+            Cursor.UpdateActiveMenu();
+            if (Cursor.WasMenuChanged)
             {
-                if (cursor.ActiveMenu is not null)
+                if (Cursor.ActiveMenu is not null)
                 {
-                    preMenuState = new(Game1.freezeControls);
+                    PreMenuState = new(Game1.freezeControls);
                     Game1.player.completelyStopAnimatingOrDoingAction();
                     Game1.freezeControls = true;
                 }
                 else
                 {
                     if (config.PrimaryActivation == ItemActivationMethod.TriggerRelease
-                        && cursor.CurrentTarget is not null)
+                        && Cursor.CurrentTarget is not null)
                     {
-                        cursor.RevertActiveMenu();
+                        Cursor.RevertActiveMenu();
                         ScheduleActivation(/* forceSelect= */ config.PrimaryAction);
                     }
                     else
@@ -165,10 +203,10 @@ public class ModEntry : Mod
                         RestorePreMenuState();
                     }
                 }
-                UpdateMenuItems(cursor.ActiveMenu);
-                painter.Items = activeMenuItems;
+                UpdateMenuItems(Cursor.ActiveMenu);
+                Painter.Items = ActiveMenuItems;
             }
-            cursor.UpdateCurrentTarget(activeMenuItems.Count);
+            Cursor.UpdateCurrentTarget(ActiveMenuItems.Count);
         }
 
         // Here be dragons: because the triggers are analog values and SMAPI uses a deadzone, it
@@ -189,9 +227,9 @@ public class ModEntry : Mod
     private void Input_ButtonsChanged(object? sender, ButtonsChangedEventArgs e)
     {
         if (!Context.IsWorldReady
-            || remainingActivationDelayMs > 0
-            || cursor.ActiveMenu is null
-            || cursor.CurrentTarget is null)
+            || RemainingActivationDelayMs > 0
+            || Cursor.ActiveMenu is null
+            || Cursor.CurrentTarget is null)
         {
             return;
         }
@@ -212,6 +250,17 @@ public class ModEntry : Mod
         }
     }
 
+    private Painter CreatePainter()
+    {
+        return new(Game1.graphics.GraphicsDevice, () => config.Styles);
+    }
+
+    private PlayerState CreatePlayerState()
+    {
+        var cursor = new Cursor(() => config);
+        return new(cursor);
+    }
+
     private static GamePadState GetRawGamePadState()
     {
         return Game1.playerOneIndex >= PlayerIndex.One
@@ -222,9 +271,9 @@ public class ModEntry : Mod
     private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation(
         ItemAction preferredAction)
     {
-        var itemIndex = cursor.CurrentTarget?.SelectedIndex;
-        return itemIndex < activeMenuItems.Count
-            ? (delayedActions) => activeMenuItems[itemIndex.Value]
+        var itemIndex = Cursor.CurrentTarget?.SelectedIndex;
+        return itemIndex < ActiveMenuItems.Count
+            ? (delayedActions) => ActiveMenuItems[itemIndex.Value]
                 .Activate(delayedActions, preferredAction)
             : null;
     }
@@ -234,14 +283,14 @@ public class ModEntry : Mod
         return config.PrimaryActivation switch
         {
             ItemActivationMethod.ActionButtonPress => button.IsActionButton(),
-            ItemActivationMethod.ThumbStickPress => cursor.IsThumbStickForActiveMenu(button),
+            ItemActivationMethod.ThumbStickPress => Cursor.IsThumbStickForActiveMenu(button),
             _ => false,
         };
     }
 
     private ItemActivationResult MaybeInvokePendingActivation()
     {
-        if (pendingActivation is null)
+        if (PendingActivation is null)
         {
             // We shouldn't actually hit this, since it's only called from conditional blocks that
             // have already confirmed there's a pending activation.
@@ -249,17 +298,17 @@ public class ModEntry : Mod
             // assumption gets broken later.
             return ItemActivationResult.Ignored;
         }
-        if (isActivationDelayed && remainingActivationDelayMs > 0)
+        if (IsActivationDelayed && RemainingActivationDelayMs > 0)
         {
             return ItemActivationResult.Delayed;
         }
-        var result = remainingActivationDelayMs <= 0
-            ? pendingActivation.Invoke(null)
-            : pendingActivation.Invoke(config.DelayedActions);
+        var result = RemainingActivationDelayMs <= 0
+            ? PendingActivation.Invoke(null)
+            : PendingActivation.Invoke(config.DelayedActions);
         if (result == ItemActivationResult.Delayed)
         {
             Game1.playSound("select");
-            isActivationDelayed = true;
+            IsActivationDelayed = true;
         }
         return result;
     }
@@ -333,19 +382,19 @@ public class ModEntry : Mod
 
     private void RestorePreMenuState()
     {
-        Game1.freezeControls = preMenuState.WasFrozen;
+        Game1.freezeControls = PreMenuState.WasFrozen;
     }
 
     private void ScheduleActivation(ItemAction preferredAction)
     {
-        isActivationDelayed = false;
-        pendingActivation = GetSelectedItemActivation(preferredAction);
-        if (pendingActivation is null)
+        IsActivationDelayed = false;
+        PendingActivation = GetSelectedItemActivation(preferredAction);
+        if (PendingActivation is null)
         {
             return;
         }
-        remainingActivationDelayMs = config.ActivationDelayMs;
-        cursor.SuppressUntilTriggerRelease();
+        RemainingActivationDelayMs = config.ActivationDelayMs;
+        Cursor.SuppressUntilTriggerRelease();
     }
 
     private void ActivateCustomMenuItem(CustomMenuItemConfiguration item)
@@ -360,7 +409,7 @@ public class ModEntry : Mod
 
     private void UpdateMenuItems(MenuKind? menu)
     {
-        activeMenuItems = menu switch
+        ActiveMenuItems = menu switch
         {
             MenuKind.Inventory => Game1.player.Items
                 .Take(config.MaxInventoryItems)
