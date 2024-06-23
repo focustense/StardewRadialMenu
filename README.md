@@ -110,6 +110,7 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
     "InnerRadius": 300.0,
     "OuterBackgroundColor": "#e5e8ba7c",
     "OuterRadius": 110.0,
+    "SelectionColor": "#e5d88c26",
     "HighlightColor": "#4169e1",
     "GapWidth": 8.0,
     "MenuSpriteHeight": 64,
@@ -153,7 +154,6 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
   * For example, if you are holding the left stick up to select the top item, and don't want the character to start walking upward immediately after a click, the default value of 250 ms means you have 1/4 of a second to release the stick in order to avoid that directional movement.
   * Every player has different reaction times, so you should experiment with this setting to find the value that works best for you. The GMCM UI sets a limit of 500 ms, but you can edit the `config.json` to have any positive value. You can also set it as low as 0 to eliminate any delay, if your priority is responsiveness and you don't care about a bit of "character drift".
 * `DelayedActions`: Lets you specify _which_ menu actions will receive the delay assigned to `ActivationDelayMs`. Only applicable if the delay is non-zero (obviously). This setting exists because most in-game actions (warp totems, horse whistle, etc.) will play some animation and thus *already* apply a delay, so any additional delay may not feel useful. The two settings are:
-
   * `All`: Apply the delay to all actions, period; anything you select from either menu will have the configured delay.
   * `ToolSwitch`: Only apply the delay to item _selection_ or "tool switches". If an item has a use-action associated with it, such as food/drinks, totems, staircases, etc., or shortcuts in the Custom menu, it will not receive the delay.
 * `MaxInventoryItems`: Maximum number of items to show in the Inventory menu. The default is 12, which is intended for game balance, allowing you to access the same number of items as you would without the mod using normal L/R trigger cycling. You can set this to any positive number; however, values above 24 are likely to look bad (e.g. overlapping text) and may make it harder to "hit" any given menu item. Most players should keep this at 12.

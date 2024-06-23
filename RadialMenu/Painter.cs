@@ -8,7 +8,7 @@ namespace RadialMenu;
 
 internal class Painter
 {
-    private record SelectionState(int ItemCount, int SelectedIndex);
+    private record SelectionState(int ItemCount, int PreviousIndex, int SelectedIndex);
 
     private const float CIRCLE_MAX_ERROR = 0.1f;
     private const float EQUILATERAL_ANGLE = MathF.PI * 2 / 3;
@@ -30,7 +30,8 @@ internal class Painter
     private VertexPositionColor[] innerVertices = [];
     private VertexPositionColor[] outerVertices = [];
     private float selectionBlend = 1.0f;
-    private SelectionState selectionState = new(/* ItemCount= */ 0, /* SelectedIndex= */ 0);
+    private SelectionState selectionState =
+        new(/* ItemCount= */ 0, /* FocusedIndex= */ 0, /* SelectedIndex= */ 0);
 
     public Painter(GraphicsDevice graphicsDevice, Func<Styles> getStyles)
     {
@@ -47,12 +48,13 @@ internal class Painter
     public void Paint(
         SpriteBatch spriteBatch,
         TileRectangle viewport,
+        int previousIndex,
         int selectedIndex,
         float? selectionAngle,
         float selectionBlend = 1.0f)
     {
         GenerateVertices();
-        var selectionState = new SelectionState(Items.Count, selectedIndex);
+        var selectionState = new SelectionState(Items.Count, previousIndex, selectedIndex);
         if (selectionState != this.selectionState || selectionBlend != this.selectionBlend)
         {
             this.selectionState = selectionState;
@@ -276,34 +278,47 @@ internal class Painter
         }
     }
 
-    private void UpdateVertexColors()
+    private static (float start, float end) GetSegmentRange(
+        int selectedIndex,
+        int itemCount,
+        int segmentCount)
     {
-        var (itemCount, selectedIndex) = selectionState;
         if (selectedIndex < 0)
         {
-            for (var i = 0; i < outerVertices.Length; i++)
-            {
-                outerVertices[i].Color = Styles.OuterBackgroundColor;
-            }
-            return;
+            return (-1.0f, -0.5f);
         }
+        var sliceSize = (float)segmentCount / itemCount;
+        var relativePosition = (float)selectedIndex / itemCount;
+        var end = (relativePosition * segmentCount + sliceSize / 2) % segmentCount;
+        var start = (end - sliceSize + segmentCount) % segmentCount;
+        return (start, end);
+    }
+
+    private void UpdateVertexColors()
+    {
+        var (itemCount, previousIndex, selectedIndex) = selectionState;
         const int outerChordSize = 6;
         var segmentCount = outerVertices.Length / outerChordSize;
-        var sliceSize = (float) segmentCount / itemCount;
-        var relativePosition = (float)selectedIndex / itemCount;
-        var highlightEndSegment =
-            (relativePosition * segmentCount + sliceSize / 2) % segmentCount;
-        var highlightStartSegment =
-            (highlightEndSegment - sliceSize + segmentCount) % segmentCount;
+        var (previousHighlightStartSegment, previousHighlightEndSegment) =
+            GetSegmentRange(previousIndex, itemCount, segmentCount);
+        var (currentHighlightStartSegment, currentHighlightEndSegment) =
+            GetSegmentRange(selectedIndex, itemCount, segmentCount);
         for (var i = 0; i < segmentCount; i++)
         {
-            var isHighlighted = highlightStartSegment < highlightEndSegment
-                ? (i >= highlightStartSegment && i < highlightEndSegment)
-                : (i >= highlightStartSegment || i < highlightEndSegment);
+            var isCurrentHighlight = currentHighlightStartSegment < currentHighlightEndSegment
+                ? (i >= currentHighlightStartSegment && i < currentHighlightEndSegment)
+                : (i >= currentHighlightStartSegment || i < currentHighlightEndSegment);
+            var isPreviousHighlight = isCurrentHighlight
+                ? false
+                : previousHighlightStartSegment < previousHighlightEndSegment
+                    ? (i >= previousHighlightStartSegment && i < previousHighlightEndSegment)
+                    : (i >= previousHighlightStartSegment || i < previousHighlightEndSegment);
             var outerIndex = i * outerChordSize;
-            var outerColor = isHighlighted
+            var outerColor = isCurrentHighlight
                 ? Color.Lerp(Styles.OuterBackgroundColor, Styles.HighlightColor, selectionBlend)
-                : Styles.OuterBackgroundColor;
+                : isPreviousHighlight
+                    ? Styles.SelectionColor
+                    : Styles.OuterBackgroundColor;
             for (var j = 0; j < outerChordSize; j++)
             {
                 outerVertices[outerIndex + j].Color = outerColor;

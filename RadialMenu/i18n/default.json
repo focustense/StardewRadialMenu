@@ -81,6 +81,8 @@
   "gmcm.style.colors.inner.tooltip": "Background color for the inner area showing detailed item info.",
   "gmcm.style.colors.outer": "Outer Background",
   "gmcm.style.colors.outer.tooltip": "Background color for the ring where items/shortcuts appear.",
+  "gmcm.style.colors.selection": "Previous Item Background",
+  "gmcm.style.colors.selection.tooltip": "Background color for the part of the ring containing the tool your farmer was holding before opening the menu.",
   "gmcm.style.colors.highlight": "Selection Background",
   "gmcm.style.colors.highlight.tooltip": "Background color for the part of the ring that is selected / about to be activated.",
   "gmcm.style.colors.cursor": "Cursor",

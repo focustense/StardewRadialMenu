@@ -96,16 +96,6 @@ public class ModEntry : Mod
         helper.Events.Display.RenderedHud += Display_RenderedHud;
     }
 
-    private float GetSelectionBlend()
-    {
-        if (PendingActivation is null)
-        {
-            return 1.0f;
-        }
-        var elapsed = (float)(config.ActivationDelayMs - RemainingActivationDelayMs);
-        return MathF.Abs(((elapsed / 80) % 2) - 1);
-    }
-
     [EventPriority(EventPriority.Low)]
     private void Display_RenderedHud(object? sender, RenderedHudEventArgs e)
     {
@@ -117,6 +107,9 @@ public class ModEntry : Mod
         Painter.Paint(
             e.SpriteBatch,
             Game1.uiViewport,
+            Cursor.ActiveMenu == MenuKind.Inventory && MenuOffset == 0
+                ? GetCurrentNonEmptyToolIndex()
+                : -1,
             Cursor.CurrentTarget?.SelectedIndex ?? -1,
             Cursor.CurrentTarget?.Angle,
             selectionBlend);
@@ -290,6 +283,16 @@ public class ModEntry : Mod
         return new(cursor);
     }
 
+    private static int GetCurrentNonEmptyToolIndex()
+    {
+        return Game1.player.CurrentItem is not null
+            ? Game1.player.Items
+                .Take(Game1.player.CurrentToolIndex + 1)
+                .Where(item => item is not null)
+                .Count() - 1
+            : -1;
+    }
+
     private static GamePadState GetRawGamePadState()
     {
         return Game1.playerOneIndex >= PlayerIndex.One
@@ -305,6 +308,16 @@ public class ModEntry : Mod
             ? (delayedActions) => ActiveMenuItems[itemIndex.Value]
                 .Activate(delayedActions, preferredAction)
             : null;
+    }
+
+    private float GetSelectionBlend()
+    {
+        if (PendingActivation is null)
+        {
+            return 1.0f;
+        }
+        var elapsed = (float)(config.ActivationDelayMs - RemainingActivationDelayMs);
+        return MathF.Abs(((elapsed / 80) % 2) - 1);
     }
 
     private bool IsActivationButton(SButton button)

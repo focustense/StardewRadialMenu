@@ -20,6 +20,7 @@ internal class StylePage(
     private const string FIELD_ID_PREFIX = "focustense.RadialMenu.Style";
     private const string FIELD_ID_INNER_COLOR = $"{FIELD_ID_PREFIX}.InnerBackgroundColor";
     private const string FIELD_ID_OUTER_COLOR = $"{FIELD_ID_PREFIX}.OuterBackgroundColor";
+    private const string FIELD_ID_SELECTION_COLOR = $"{FIELD_ID_PREFIX}.SelectionColor";
     private const string FIELD_ID_HIGHLIGHT_COLOR = $"{FIELD_ID_PREFIX}.HighlightColor";
     private const string FIELD_ID_CURSOR_COLOR = $"{FIELD_ID_PREFIX}.CursorColor";
     private const string FIELD_ID_TITLE_COLOR = $"{FIELD_ID_PREFIX}.TitleColor";
@@ -41,6 +42,7 @@ internal class StylePage(
     // These assets are initialized in Setup(), so we assume they're not null once we need them.
     private readonly Color[] innerPreviewData = new Color[PREVIEW_LENGTH];
     private readonly Color[] outerPreviewData = new Color[PREVIEW_LENGTH];
+    private readonly Color[] selectionPreviewData = new Color[PREVIEW_LENGTH];
     private readonly Color[] highlightPreviewData = new Color[PREVIEW_LENGTH];
     private readonly Color[] cursorPreviewData = new Color[PREVIEW_LENGTH];
     private readonly Color[] itemsPreviewData = new Color[PREVIEW_LENGTH];
@@ -73,6 +75,7 @@ internal class StylePage(
     {
         modContent.Load<Texture2D>("assets/preview-inner.png").GetData(innerPreviewData);
         modContent.Load<Texture2D>("assets/preview-outer.png").GetData(outerPreviewData);
+        modContent.Load<Texture2D>("assets/preview-previous.png").GetData(selectionPreviewData);
         modContent.Load<Texture2D>("assets/preview-selection.png").GetData(highlightPreviewData);
         modContent.Load<Texture2D>("assets/preview-cursor.png").GetData(cursorPreviewData);
         modContent.Load<Texture2D>("assets/preview-items.png").GetData(itemsPreviewData);
@@ -107,6 +110,12 @@ internal class StylePage(
             tooltip: () => translations.Get("gmcm.style.colors.outer.tooltip"),
             getColor: () => Styles.OuterBackgroundColor,
             setColor: color => Styles.OuterBackgroundColor = color);
+        AddColorOption(
+            FIELD_ID_SELECTION_COLOR,
+            name: () => translations.Get("gmcm.style.colors.selection"),
+            tooltip: () => translations.Get("gmcm.style.colors.selection.tooltip"),
+            getColor: () => Styles.SelectionColor,
+            setColor: color => Styles.SelectionColor = color);
         AddColorOption(
             FIELD_ID_HIGHLIGHT_COLOR,
             name: () => translations.Get("gmcm.style.colors.highlight"),
@@ -228,6 +237,7 @@ internal class StylePage(
             {
                 case FIELD_ID_OUTER_COLOR:
                 case FIELD_ID_INNER_COLOR:
+                case FIELD_ID_SELECTION_COLOR:
                 case FIELD_ID_HIGHLIGHT_COLOR:
                 case FIELD_ID_CURSOR_COLOR:
                 case FIELD_ID_TITLE_COLOR:
@@ -302,6 +312,7 @@ internal class StylePage(
     {
         liveColorValues[FIELD_ID_INNER_COLOR] = Styles.InnerBackgroundColor;
         liveColorValues[FIELD_ID_OUTER_COLOR] = Styles.OuterBackgroundColor;
+        liveColorValues[FIELD_ID_SELECTION_COLOR] = Styles.SelectionColor;
         liveColorValues[FIELD_ID_HIGHLIGHT_COLOR] = Styles.HighlightColor;
         liveColorValues[FIELD_ID_CURSOR_COLOR] = Styles.CursorColor;
         liveColorValues[FIELD_ID_TITLE_COLOR] = Styles.SelectionTitleColor;
@@ -317,6 +328,8 @@ internal class StylePage(
                 Premultiply(liveColorValues[FIELD_ID_INNER_COLOR], innerPreviewData[i].A);
             var outerColor =
                 Premultiply(liveColorValues[FIELD_ID_OUTER_COLOR], outerPreviewData[i].A);
+            var selectionColor =
+                Premultiply(liveColorValues[FIELD_ID_SELECTION_COLOR], selectionPreviewData[i].A);
             var highlightColor =
                 Premultiply(liveColorValues[FIELD_ID_HIGHLIGHT_COLOR], highlightPreviewData[i].A);
             var cursorColor =
@@ -329,6 +342,7 @@ internal class StylePage(
                 descriptionPreviewData[i].A);
             previewData[i] = innerColor
                 .BlendPremultiplied(outerColor)
+                .BlendPremultiplied(selectionColor)
                 .BlendPremultiplied(highlightColor)
                 .BlendPremultiplied(cursorColor)
                 .BlendPremultiplied(itemsColor)

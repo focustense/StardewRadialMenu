@@ -39,7 +39,14 @@ public class Styles
     /// </remarks>
     public float OuterRadius { get; set; } = 110;
     /// <summary>
-    /// Contextual background color for the part of the outer menu that is highlighted (selected).
+    /// Contextual background color for the part of the outer menu that matches the player's current
+    /// tool selection.
+    /// This is not an overlay color, the selection color completely replaces the
+    /// <see cref="OuterBackgroundColor"/> for that slice.
+    /// </summary>
+    public HexColor SelectionColor { get; set; } = new(new Color(0.85f, 0.55f, 0.15f, 0.9f));
+    /// <summary>
+    /// Contextual background color for the part of the outer menu that is highlighted (focused).
     /// This is not an overlay color, the highlight completely replaces the
     /// <see cref="OuterBackgroundColor"/> for that slice.
     /// </summary>
