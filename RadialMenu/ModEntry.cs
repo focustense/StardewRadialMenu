@@ -32,6 +32,12 @@ public class ModEntry : Mod
         set => PlayerState.PreMenuState = value;
     }
 
+    internal int MenuOffset
+    {
+        get => PlayerState.MenuOffset;
+        set => PlayerState.MenuOffset = value;
+    }
+
     internal IReadOnlyList<MenuItem> ActiveMenuItems
     {
         get => PlayerState.ActiveMenuItems;
@@ -189,6 +195,7 @@ public class ModEntry : Mod
                     PreMenuState = new(Game1.freezeControls);
                     Game1.player.completelyStopAnimatingOrDoingAction();
                     Game1.freezeControls = true;
+                    MenuOffset = 0;
                 }
                 else
                 {
@@ -204,7 +211,6 @@ public class ModEntry : Mod
                     }
                 }
                 UpdateMenuItems(Cursor.ActiveMenu);
-                Painter.Items = ActiveMenuItems;
             }
             Cursor.UpdateCurrentTarget(ActiveMenuItems.Count);
         }
@@ -226,26 +232,49 @@ public class ModEntry : Mod
 
     private void Input_ButtonsChanged(object? sender, ButtonsChangedEventArgs e)
     {
-        if (!Context.IsWorldReady
-            || RemainingActivationDelayMs > 0
-            || Cursor.ActiveMenu is null
-            || Cursor.CurrentTarget is null)
+        if (!Context.IsWorldReady || RemainingActivationDelayMs > 0 || Cursor.ActiveMenu is null)
         {
             return;
         }
+        
         foreach (var button in e.Pressed)
         {
-            if (button == config.SecondaryActionButton)
+            if (Cursor.CurrentTarget is not null)
             {
-                ScheduleActivation(/* forceSelect= */ config.SecondaryAction);
-                Helper.Input.Suppress(button);
-                return;
+                if (button == config.SecondaryActionButton)
+                {
+                    ScheduleActivation(/* forceSelect= */ config.SecondaryAction);
+                    Helper.Input.Suppress(button);
+                    return;
+                }
+                else if (IsActivationButton(button))
+                {
+                    ScheduleActivation(/* forceSelect= */ config.PrimaryAction);
+                    Helper.Input.Suppress(button);
+                    return;
+                }
             }
-            else if (IsActivationButton(button))
+
+            switch (button)
             {
-                ScheduleActivation(/* forceSelect= */ config.PrimaryAction);
-                Helper.Input.Suppress(button);
-                return;
+                case SButton.LeftShoulder:
+                    // We could also apply an offset equal to the Config.MaxInventoryItems value.
+                    // But that could land us in a weird situation where the menu gets permanently
+                    // out of sync with the toolbar, since the configured size does not have to be a
+                    // multiple of the true page size.
+                    //
+                    // Also note that the reason not to immediately apply an offset here (i.e. via
+                    // Farmer.shiftToolbar) is that if the player cancels out of the menu without
+                    // selecting anything, or quick-activates a consumable item, we don't want to
+                    // change the tool that's already equipped, which would happen automatically if
+                    // using shiftToolbar.
+                    ApplyMenuOffset(-GameConstants.BACKPACK_PAGE_SIZE);
+                    UpdateMenuItems(Cursor.ActiveMenu);
+                    break;
+                case SButton.RightShoulder:
+                    ApplyMenuOffset(GameConstants.BACKPACK_PAGE_SIZE);
+                    UpdateMenuItems(Cursor.ActiveMenu);
+                    break;
             }
         }
     }
@@ -309,6 +338,32 @@ public class ModEntry : Mod
         {
             Game1.playSound("select");
             IsActivationDelayed = true;
+        }
+        // Because we allow "internal" page changes within the radial menu that don't go through
+        // Farmer.shiftToolbar (on purpose), the selected index can now be on a non-active page.
+        // To avoid confusing the game's UI, check for this condition and switch to the backpack
+        // page that actually does contain the index.
+        if (result == ItemActivationResult.Selected
+            && Game1.player.CurrentToolIndex >= GameConstants.BACKPACK_PAGE_SIZE)
+        {
+            var items = Game1.player.Items;
+            var currentPage = Game1.player.CurrentToolIndex / GameConstants.BACKPACK_PAGE_SIZE;
+            var indexOnPage = Game1.player.CurrentToolIndex % GameConstants.BACKPACK_PAGE_SIZE;
+            var newFirstIndex = currentPage * GameConstants.BACKPACK_PAGE_SIZE;
+            var itemsBefore = items.GetRange(0, newFirstIndex);
+            var itemsAfter = items.GetRange(newFirstIndex, items.Count - newFirstIndex);
+            items.Clear();
+            items.AddRange(itemsAfter);
+            items.AddRange(itemsBefore);
+            Game1.player.CurrentToolIndex = indexOnPage;
+            // Menu offset applies to the same Items array we just modified, so it has to be reset
+            // in order for the radial menu to stay in sync.
+            //
+            // Offset is also reset when bringing up the menu, so in a certain sense, this is
+            // superfluous. However, resetting on each menu open is a design choice that might seem
+            // annoying to some users, or we might want to revisit in the future, whereas the offset
+            // always needs to be reset after rebuilding the inventory, just to avoid bugging out.
+            MenuOffset = 0;
         }
         return result;
     }
@@ -407,14 +462,37 @@ public class ModEntry : Mod
         keybindActivator.Activate(item.Keybind);
     }
 
+    private void ApplyMenuOffset(int offset)
+    {
+        var previousOffset = MenuOffset;
+        var maxItems = Game1.player.Items.Count;
+        MenuOffset = (MenuOffset + offset + maxItems) % maxItems;
+        if (MenuOffset != previousOffset)
+        {
+            Game1.playSound("shwip");
+        }
+    }
+
+    private IEnumerable<(Item item, int index)> GetVisibleInventoryItems()
+    {
+        var items = Game1.player.Items;
+        var index = PlayerState.MenuOffset;
+        for (int i = 0; i < config.MaxInventoryItems; i++)
+        {
+            yield return (items[index], index);
+            if (++index >= items.Count)
+            {
+                index = 0;
+            }
+        }
+    }
+
     private void UpdateMenuItems(MenuKind? menu)
     {
         ActiveMenuItems = menu switch
         {
-            MenuKind.Inventory => Game1.player.Items
-                .Take(config.MaxInventoryItems)
-                .Select((item, index) =>
-                    item != null ? menuItemBuilder.GameItem(item, index) : null)
+            MenuKind.Inventory => GetVisibleInventoryItems()
+                .Select(x => x.item != null ? menuItemBuilder.GameItem(x.item, x.index) : null)
                 .Where(i => i is not null)
                 .Cast<MenuItem>()
                 .ToList(),
@@ -423,5 +501,6 @@ public class ModEntry : Mod
                 .ToList(),
             _ => [],
         };
+        Painter.Items = ActiveMenuItems;
     }
 }
