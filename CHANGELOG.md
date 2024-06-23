@@ -16,13 +16,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - This was added because the radial menu freezes gameplay controls which, as a side effects, also hides the vanilla toolbar, so previously the only way to remind oneself of which item was already selected was to dismiss the radial menu in order to see the toolbar again.
 - This changelog. Covers all past releases.
 
-## [v0.1.5] - 2024-06-21
+## [0.1.5] - 2024-06-21
 
 ### Fixed
 
 - Menu now works in local co-op without freezing, thrashing or locking out controls.
 
-## [v0.1.4] - 2024-06-20
+## [0.1.4] - 2024-06-20
 
 ### Fixed
 
@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Menu/focused items will have the correct color tint.
 - Smoked Fish will show the correct fish (previously it was always a carp).
 
-## [v0.1.3-alpha] - 2024-06-18
+## [0.1.3-alpha] - 2024-06-18
 
 ### Changed
 
@@ -39,20 +39,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Out-of-the-box control scheme remains the scheme (A to auto-use, X to force-select) but players can now edit these to form one of the more commonly-requested alternate schemes, using trigger release for select and A or X button for auto-use.
 - Changes names of the configuration settings related to the above features, so those settings will be reset on first-time launch and may have to be updated again for players not using the defaults.
 
-## [v0.1.2-alpha] - 2024-06-17
+## [0.1.2-alpha] - 2024-06-17
 
 ### Added
 
 - Forced tool selection (skip quick actions like eat, warp) using a secondary button, default "X". This restores the ability to hold a consumable item for putting into machines, gifting, etc.
 - Secondary button configuration in GMCM settings.
 
-## [v0.1.1-alpha] - 2024-06-17
+## [0.1.1-alpha] - 2024-06-17
 
 ### Changed
 
 - Only play "select" sound when activation is delayed. Many items have their own activation sounds and/or animations, so having the menu also play a sound could lead to confusing and annoying feedback.
 
-## [v0.1.0-alpha] - 2024-06-16
+## [0.1.0-alpha] - 2024-06-16
 
 ### Added
 
@@ -60,3 +60,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Inventory menu via left trigger (default).
 - Custom shortcuts menu via right trigger (default).
 - [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) pages for control scheme, appearance and custom shortcuts.
+
+[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.3-alpha...v0.1.4
+[0.1.3-alpha]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.2-alpha...v0.1.3-alpha
+[0.1.2-alpha]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.1-alpha...v0.1.2-alpha
+[0.1.1-alpha]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.0-alpha...v0.1.1-alpha
+[0.1.0-alpha]: https://github.com/focustense/StardewRadialMenu/tree/v0.1.0-alpha
