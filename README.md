@@ -42,6 +42,8 @@ For a full list of all the configurable features, refer to [Configuration](#conf
 
 * Quick actions for most consumable items including food, warp totems, staircases, etc. Activating one of these items from the Inventory menu will _not_ switch your selection; it will preserve your previous tool selection and directly perform that item's action (eat the food, take you to the next floor, etc.). Loosely inspired by [EatDrinkFromInventory](https://github.com/Zamiell/stardew-valley-mods/tree/main/EatDrinkFromInventory).
 
+* Access all backpack pages while the menu is open; switch using the Left/Right shoulder buttons.
+
 * Access not only your inventory via the menu, but also mod-added functions! Set up any list of shortcuts you want, with any actions you want.
 
 > [!IMPORTANT]
@@ -131,7 +133,6 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
 * `TriggerDeadZone`: How far the left/right triggers have to be pressed in before the menu will show. Valid values are between 0 and 1. The default of 0.2 should be comfortable for most players, preventing accidental triggers without making the menu awkward to activate or hold open.
 * `SwapTriggers`: Switches the trigger used to open each menu. Normally, the left trigger opens the Inventory (Tools) menu and the right trigger opens the Custom (Shortcuts) menu. If you enable this option, left/right will be switched.
 * `ThumbStickPreference`: Controls which controller thumbstick will control the selection in an active menu. Valid values are:
-
   * `AlwaysLeft` - left analog stick controls both radial menus.
   * `AlwaysRight` - right analog stick controls both radial menus.
   * `SameAsTrigger` - left stick controls the left-trigger menu, right stick controls the right-trigger menu.
@@ -219,3 +220,7 @@ Feel free to either:
 
 * Create a [GitHub issue](https://github.com/focustense/StardewRadialMenu/issues); when doing so, please follow bug-reporting etiquette. Check first for similar reports, and make sure to include all relevant details about your issue, especially including clear repro steps and/or [SMAPI log](https://smapi.io/log).
 * Or, ping me on the [SV Discord](https://discord.com/invite/stardewvalley) if I happen to be around. Discord is best if you have a quick question, but I make no promises re: availability for in-depth troubleshooting.
+
+## See Also
+
+* [Changelog](CHANGELOG.md)
