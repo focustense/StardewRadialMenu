@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.6] - 2024-06-23
+
 ### Added
 
 - Switch pages (using L/R shoulder buttons) while menu is open.
@@ -61,7 +63,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Custom shortcuts menu via right trigger (default).
 - [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) pages for control scheme, appearance and custom shortcuts.
 
-[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.3-alpha...v0.1.4
 [0.1.3-alpha]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.2-alpha...v0.1.3-alpha
