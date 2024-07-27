@@ -5,6 +5,12 @@
   "Description": "Radial menu for streamlined controller play",
   "UniqueID": "focustense.RadialMenu",
   "EntryDll": "RadialMenu.dll",
+  "Dependencies": [
+    {
+      "UniqueID": "spacechase0.GenericModConfigMenu",
+      "IsRequired": true
+    }
+  ],
   "MinimumApiVersion": "4.0.5",
   "UpdateKeys": [ "Nexus:25257", "GitHub:focustense/StardewRadialMenu" ]
 }
