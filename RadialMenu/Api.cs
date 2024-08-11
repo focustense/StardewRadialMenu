@@ -75,7 +75,7 @@ public class Api : IRadialMenuApi
         this.monitor = monitor;
     }
 
-    public IReadOnlyList<IRadialMenuPage> GetPages(Farmer who)
+    internal IReadOnlyList<IRadialMenuPage> GetPages(Farmer who)
     {
         return registry.CreatePageList(who);
     }

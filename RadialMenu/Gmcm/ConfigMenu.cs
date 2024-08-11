@@ -42,21 +42,19 @@ internal class ConfigMenu(
 
     private void AddMainOptions()
     {
-        gmcm.AddSectionTitle(
-            mod,
-            text: () => translations.Get("gmcm.controls"));
+        gmcm.AddSectionTitle(mod, I18n.Gmcm_Controls);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.controls.trigger.deadzone"),
-            tooltip: () => translations.Get("gmcm.controls.trigger.deadzone.tooltip"),
+            name: I18n.Gmcm_Controls_Trigger_Deadzone,
+            tooltip: I18n.Gmcm_Controls_Trigger_Deadzone_Tooltip,
             getValue: () => Config.TriggerDeadZone,
             setValue: value => Config.TriggerDeadZone = value,
             min: 0.0f,
             max: 1.0f);
         gmcm.AddBoolOption(
             mod,
-            name: () => translations.Get("gmcm.controls.trigger.swap"),
-            tooltip: () => translations.Get("gmcm.controls.trigger.swap.tooltip"),
+            name: I18n.Gmcm_Controls_Trigger_Swap,
+            tooltip: I18n.Gmcm_Controls_Trigger_Swap_Tooltip,
             getValue: () => Config.SwapTriggers,
             setValue: value => Config.SwapTriggers = value);
         AddEnumOption(
@@ -65,8 +63,8 @@ internal class ConfigMenu(
             setValue: value => Config.ThumbStickPreference = value);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.controls.thumbstick.deadzone"),
-            tooltip: () => translations.Get("gmcm.controls.thumbstick.deadzone.tooltip"),
+            name: I18n.Gmcm_Controls_Thumbstick_Deadzone,
+            tooltip: I18n.Gmcm_Controls_Thumbstick_Deadzone_Tooltip,
             getValue: () => Config.ThumbStickDeadZone,
             setValue: value => Config.ThumbStickDeadZone = value,
             min: 0.0f,
@@ -82,8 +80,8 @@ internal class ConfigMenu(
             value => Config.PrimaryAction = value);
         gmcm.AddKeybind(
             mod,
-            name: () => translations.Get("gmcm.controls.action.secondary.button"),
-            tooltip: () => translations.Get("gmcm.controls.action.secondary.button.tooltip"),
+            name: I18n.Gmcm_Controls_Action_Secondary_Button,
+            tooltip: I18n.Gmcm_Controls_Action_Secondary_Button_Tooltip,
             getValue: () => Config.SecondaryActionButton,
             setValue: value => Config.SecondaryActionButton = value);
         AddEnumOption(
@@ -93,13 +91,11 @@ internal class ConfigMenu(
             value => Config.SecondaryAction = value);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.controls.activation.delay"),
-            tooltip: () => translations.Get("gmcm.controls.activation.delay.tooltip"),
+            name: I18n.Gmcm_Controls_Activation_Delay,
+            tooltip: I18n.Gmcm_Controls_Activation_Delay_Tooltip,
             getValue: () => Config.ActivationDelayMs,
             setValue: value => Config.ActivationDelayMs = value,
-            formatValue: value => translations.Get(
-                "gmcm.controls.activation.delay.value",
-                new { value }),
+            formatValue: value => I18n.Gmcm_Controls_Activation_Delay_Value(value),
             min: 0,
             max: 500);
         AddEnumOption(
@@ -108,18 +104,16 @@ internal class ConfigMenu(
             setValue: value => Config.DelayedActions = value);
         gmcm.AddBoolOption(
             mod,
-            name: () => translations.Get("gmcm.controls.rememberselection"),
-            tooltip: () => translations.Get("gmcm.controls.rememberselection.tooltip"),
+            name: I18n.Gmcm_Controls_Rememberselection,
+            tooltip: I18n.Gmcm_Controls_Rememberselection_Tooltip,
             getValue: () => Config.RememberSelection,
             setValue: value => Config.RememberSelection = value);
 
-        gmcm.AddSectionTitle(
-            mod,
-            text: () => translations.Get("gmcm.inventory"));
+        gmcm.AddSectionTitle(mod, I18n.Gmcm_Inventory);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.inventory.max"),
-            tooltip: () => translations.Get("gmcm.inventory.max.tooltip"),
+            name: I18n.Gmcm_Inventory_Max,
+            tooltip: I18n.Gmcm_Inventory_Max_Tooltip,
             getValue: () => Config.MaxInventoryItems,
             setValue: value => Config.MaxInventoryItems = value,
             // Any less than the size of a single backpack row (12) and some items become
@@ -133,13 +127,13 @@ internal class ConfigMenu(
         gmcm.AddPageLink(
             mod,
             pageId: CustomMenuPage.ID,
-            text: () => translations.Get("gmcm.custom.link"),
-            tooltip: () => translations.Get("gmcm.custom.link.tooltip"));
+            text: I18n.Gmcm_Custom_Link,
+            tooltip: I18n.Gmcm_Custom_Link_Tooltip);
         gmcm.AddPageLink(
             mod,
             pageId: StylePage.ID,
-            text: () => translations.Get("gmcm.style.link"),
-            tooltip: () => translations.Get("gmcm.style.link.tooltip"));
+            text: I18n.Gmcm_Style_Link,
+            tooltip: I18n.Gmcm_Style_Link_Tooltip);
     }
 
     private void AddEnumOption<T>(

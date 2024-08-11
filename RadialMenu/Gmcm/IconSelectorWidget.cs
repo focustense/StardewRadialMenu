@@ -187,8 +187,7 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         // Category names don't seem to be in the API anywhere and maybe not even in the game at
         // all, so we store our own in the translations.
         var id = qualifier.TrimStart('(').TrimEnd(')');
-        return translations.Get($"itemcategory.{id}")
-            .Default(translations.Get("itemcategory.unknown", new { id }));
+        return translations.Get($"itemcategory.{id}").Default(I18n.Itemcategory_Unknown(id));
     }
 
     private static string GetFirstItemForCategory(string categoryId)

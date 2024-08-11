@@ -95,12 +95,12 @@ internal class CustomMenuPage(
 
     private void RegisterPage()
     {
-        gmcm.AddPage(mod, ID, () => translations.Get("gmcm.custom"));
+        gmcm.AddPage(mod, ID, I18n.Gmcm_Custom);
 
-        reg.AddParagraph(() => translations.Get("gmcm.custom.intro"));
+        reg.AddParagraph(I18n.Gmcm_Custom_Intro);
         reg.AddNumberOption(
-            name: () => translations.Get("gmcm.custom.count"),
-            tooltip: () => translations.Get("gmcm.custom.count.tooltip"),
+            name: I18n.Gmcm_Custom_Count,
+            tooltip: I18n.Gmcm_Custom_Count_Tooltip,
             fieldId: FIELD_ID_COUNT,
             getValue: () => Math.Max(Config.CustomMenuItems.Count, 0),
             // Changing the item count is handled by the various instant-update mechanisms. Setting
@@ -113,7 +113,7 @@ internal class CustomMenuPage(
             // Keep this the same as the Inventory max size.
             max: 24);
         reg.AddComplexOption(
-            name: () => translations.Get("gmcm.custom.items"),
+            name: I18n.Gmcm_Custom_Items,
             draw: (spriteBatch, startPosition) => {
                 LateLoad();
                 itemList.Draw(spriteBatch, startPosition);
@@ -130,33 +130,29 @@ internal class CustomMenuPage(
             // chance to save their values, because not all of them post immediate updates.
             afterSave: () => Config.CustomMenuItems = SanitizeItems(Config.CustomMenuItems).ToList(),
             height: itemList.GetHeight);
-        reg.AddSectionTitle(
-            text: () => string.Format(
-                translations.Get(
-                    "gmcm.custom.item.properties",
-                    new { index = itemList.SelectedIndex + 1 })));
+        reg.AddSectionTitle(() => I18n.Gmcm_Custom_Item_Properties(itemList.SelectedIndex + 1));
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.name"),
-            tooltip: () => translations.Get("gmcm.custom.item.name.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Name,
+            tooltip: I18n.Gmcm_Custom_Item_Name_Tooltip,
             fieldId: FIELD_ID_NAME,
             getValue: () => itemList.SelectedItem.Name,
             setValue: value => itemList.SelectedItem.Name = value);
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.description"),
-            tooltip: () => translations.Get("gmcm.custom.item.description.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Description,
+            tooltip: I18n.Gmcm_Custom_Item_Description_Tooltip,
             fieldId: FIELD_ID_DESCRIPTION,
             getValue: () => itemList.SelectedItem.Description,
             setValue: value => itemList.SelectedItem.Description = value);
         reg.AddKeybindList(
-            name: () => translations.Get("gmcm.custom.item.keybind"),
-            tooltip: () => translations.Get("gmcm.custom.item.keybind.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Keybind,
+            tooltip: I18n.Gmcm_Custom_Item_Keybind_Tooltip,
             fieldId: FIELD_ID_KEYBIND,
             getValue: () => new(itemList.SelectedItem.Keybind),
             setValue: value =>
                 itemList.SelectedItem.Keybind = value.Keybinds.FirstOrDefault() ?? new());
         reg.AddBoolOption(
-            name: () => translations.Get("gmcm.custom.item.delay"),
-            tooltip: () => translations.Get("gmcm.custom.item.delay.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Delay,
+            tooltip: I18n.Gmcm_Custom_Item_Delay_Tooltip,
             fieldId: FIELD_ID_DELAY,
             getValue: () => itemList.SelectedItem.EnableActivationDelay,
             setValue: value => itemList.SelectedItem.EnableActivationDelay = value);
@@ -169,8 +165,8 @@ internal class CustomMenuPage(
             reg.AddParagraph(() => "");
         }
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.image.type"),
-            tooltip: () => translations.Get("gmcm.custom.item.image.type.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Image_Type,
+            tooltip: I18n.Gmcm_Custom_Item_Image_Type_Tooltip,
             fieldId: FIELD_ID_IMAGE_TYPE,
             getValue: () => itemList.SelectedItem.SpriteSourceFormat.ToString(),
             setValue: value => itemList.SelectedItem.SpriteSourceFormat =
@@ -178,8 +174,8 @@ internal class CustomMenuPage(
             allowedValues: Enum.GetNames<SpriteSourceFormat>(),
             formatAllowedValue: value => translations.Get($"gmcm.custom.item.image.type.{value}"));
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.image.item"),
-            tooltip: () => translations.Get("gmcm.custom.item.image.item.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Image_Item,
+            tooltip: I18n.Gmcm_Custom_Item_Image_Item_Tooltip,
             fieldId: FIELD_ID_IMAGE_ITEM_ID,
             getValue: () => itemList.SelectedItem.SpriteSourceFormat == SpriteSourceFormat.ItemIcon
                 ? itemList.SelectedItem.SpriteSourcePath
@@ -197,8 +193,8 @@ internal class CustomMenuPage(
             draw: iconSelector.Draw,
             height: iconSelector.GetHeight);
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.image.assetpath"),
-            tooltip: () => translations.Get("gmcm.custom.item.image.assetpath.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Image_Assetpath,
+            tooltip: I18n.Gmcm_Custom_Item_Image_Assetpath_Tooltip,
             fieldId: FIELD_ID_IMAGE_ASSET_PATH,
             getValue: () => selectedSpriteAssetPath,
             setValue: value =>
@@ -207,8 +203,8 @@ internal class CustomMenuPage(
                 UpdateCustomSpritePreview();
             });
         reg.AddTextOption(
-            name: () => translations.Get("gmcm.custom.item.image.sourcerect"),
-            tooltip: () => translations.Get("gmcm.custom.item.image.sourcerect.tooltip"),
+            name: I18n.Gmcm_Custom_Item_Image_Sourcerect,
+            tooltip: I18n.Gmcm_Custom_Item_Image_Sourcerect_Tooltip,
             fieldId: FIELD_ID_IMAGE_SOURCE_RECT,
             getValue: () => selectedSpriteTextureRect,
             setValue: value =>
@@ -223,12 +219,12 @@ internal class CustomMenuPage(
             height: () => SpritePreviewWidget.Height);
         if (gmcmBindings is not null)
         {
-            reg.AddSectionTitle(() => translations.Get("gmcm.custom.item.gmcm"));
-            reg.AddParagraph(() => translations.Get("gmcm.custom.item.gmcm.note"));
+            reg.AddSectionTitle(I18n.Gmcm_Custom_Item_Gmcm);
+            reg.AddParagraph(I18n.Gmcm_Custom_Item_Gmcm_Note);
             gmcmFilterModId = itemList.SelectedItem.Gmcm?.ModId ?? "";
             reg.AddTextOption(
-                name: () => translations.Get("gmcm.custom.item.gmcm.mod"),
-                tooltip: () => translations.Get("gmcm.custom.item.gmcm.mod.tooltip"),
+                name: I18n.Gmcm_Custom_Item_Gmcm_Mod,
+                tooltip: I18n.Gmcm_Custom_Item_Gmcm_Mod_Tooltip,
                 fieldId: FIELD_ID_GMCM_MOD,
                 getValue: () => gmcmFilterModId,
                 setValue: value => gmcmFilterModId = value,
@@ -239,8 +235,8 @@ internal class CustomMenuPage(
                     ? gmcmBindings.AllMods[modId].Name
                     : "--- NONE ---");
             reg.AddTextOption(
-                name: () => translations.Get("gmcm.custom.item.gmcm.action"),
-                tooltip: () => translations.Get("gmcm.custom.item.gmcm.action.tooltip"),
+                name: I18n.Gmcm_Custom_Item_Gmcm_Action,
+                tooltip: I18n.Gmcm_Custom_Item_Gmcm_Action_Tooltip,
                 fieldId: FIELD_ID_GMCM_KEYBIND,
                 getValue: () => GetGmcmAssociationId(itemList.SelectedItem.Gmcm),
                 setValue: value => itemList.SelectedItem!.Gmcm = ResolveGmcmAssociation(
@@ -259,8 +255,8 @@ internal class CustomMenuPage(
                     .ToArray(),
                 formatAllowedValue: id => ResolveGmcmAssociation(id, false)?.FieldName ?? id);
             reg.AddBoolOption(
-                name: () => translations.Get("gmcm.custom.item.gmcm.override"),
-                tooltip: () => translations.Get("gmcm.custom.item.gmcm.override.tooltip"),
+                name: I18n.Gmcm_Custom_Item_Gmcm_Override,
+                tooltip: I18n.Gmcm_Custom_Item_Gmcm_Override_Tooltip,
                 fieldId: FIELD_ID_GMCM_OVERRIDE,
                 getValue: () => itemList.SelectedItem.Gmcm?.UseCustomName ?? false,
                 setValue: value =>
@@ -420,10 +416,8 @@ internal class CustomMenuPage(
                 if (string.IsNullOrEmpty(item.Name))
                 {
                     item.Name = item.Keybind.IsBound
-                        ? translations.Get(
-                            "gmcm.custom.item.default.namewithbinding",
-                            new { binding = item.Keybind })
-                        : translations.Get("gmcm.custom.item.default.name");
+                        ? I18n.Gmcm_Custom_Item_Default_Namewithbinding(item.Keybind)
+                        : I18n.Gmcm_Custom_Item_Default_Name();
                 }
 
                 return item;
@@ -489,9 +483,7 @@ internal class CustomMenuPage(
         }
         menu.ForceUpdateElement<Label>(
             reg.GetTablePosition(FIELD_ID_NAME) - 1,
-            label => label.String = translations.Get(
-                "gmcm.custom.item.properties",
-                new { index = itemList.SelectedIndex + 1 }));
+            label => label.String = I18n.Gmcm_Custom_Item_Properties(itemList.SelectedIndex + 1));
         ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
         ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
         ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
@@ -594,14 +586,9 @@ internal class CustomMenuPage(
         var modName = gmcmBindings!.AllMods.TryGetValue(association.ModId, out var mod)
             ? mod.Name
             : "(???)";
-        var formatArgs = new
-        {
-            modName,
-            overrideOptionName = translations.Get("gmcm.custom.item.gmcm.override")
-        };
         var unbrokenText = association.UseCustomName
-            ? translations.Get("gmcm.custom.item.synced.onlykeybind", formatArgs)
-            : translations.Get("gmcm.custom.item.synced.all", formatArgs);
+            ? I18n.Gmcm_Custom_Item_Synced_Onlykeybind(modName)
+            : I18n.Gmcm_Custom_Item_Synced_All(modName, I18n.Gmcm_Custom_Item_Gmcm_Override());
         return UiHelper.BreakParagraph(unbrokenText, maxWidth);
     }
 

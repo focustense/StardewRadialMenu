@@ -94,6 +94,7 @@ public class ModEntry : Mod
     public override void Entry(IModHelper helper)
     {
         config = Helper.ReadConfig<Configuration>();
+        I18n.Init(helper.Translation);
         api = new(pageRegistry, Monitor);
         textureHelper = new(Helper.GameContent, Monitor);
         keybindActivator = new(helper.Input);

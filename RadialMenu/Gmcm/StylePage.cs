@@ -85,72 +85,64 @@ internal class StylePage(
 
     private void RegisterPage()
     {
-        gmcm.AddPage(mod, ID, () => translations.Get("gmcm.style"));
+        gmcm.AddPage(mod, ID, I18n.Gmcm_Style);
 
         gmcm.AddImage(mod, () => menuPreview, scale: 1);
 
-        gmcm.AddSectionTitle(
-            mod,
-            text: () => translations.Get("gmcm.style.colors"));
+        gmcm.AddSectionTitle(mod, I18n.Gmcm_Style_Colors);
         if (gmcmOptions is null)
         {
-            gmcm.AddParagraph(
-                mod,
-                text: () => translations.Get("gmcm.style.colors.slidernote"));
+            gmcm.AddParagraph(mod, I18n.Gmcm_Style_Colors_Slidernote);
         }
         AddColorOption(
             FIELD_ID_INNER_COLOR,
-            name: () => translations.Get("gmcm.style.colors.inner"),
-            tooltip: () => translations.Get("gmcm.style.colors.inner.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Inner,
+            tooltip: I18n.Gmcm_Style_Colors_Inner_Tooltip,
             getColor: () => Styles.InnerBackgroundColor,
             setColor: color => Styles.InnerBackgroundColor = color);
         AddColorOption(
             FIELD_ID_OUTER_COLOR,
-            name: () => translations.Get("gmcm.style.colors.outer"),
-            tooltip: () => translations.Get("gmcm.style.colors.outer.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Outer,
+            tooltip: I18n.Gmcm_Style_Colors_Outer_Tooltip,
             getColor: () => Styles.OuterBackgroundColor,
             setColor: color => Styles.OuterBackgroundColor = color);
         AddColorOption(
             FIELD_ID_SELECTION_COLOR,
-            name: () => translations.Get("gmcm.style.colors.selection"),
-            tooltip: () => translations.Get("gmcm.style.colors.selection.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Selection,
+            tooltip: I18n.Gmcm_Style_Colors_Selection_Tooltip,
             getColor: () => Styles.SelectionColor,
             setColor: color => Styles.SelectionColor = color);
         AddColorOption(
             FIELD_ID_HIGHLIGHT_COLOR,
-            name: () => translations.Get("gmcm.style.colors.highlight"),
-            tooltip: () => translations.Get("gmcm.style.colors.highlight.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Highlight,
+            tooltip: I18n.Gmcm_Style_Colors_Highlight_Tooltip,
             getColor: () => Styles.HighlightColor,
             setColor: color => Styles.HighlightColor = color);
         AddColorOption(
             FIELD_ID_CURSOR_COLOR,
-            name: () => translations.Get("gmcm.style.colors.cursor"),
-            tooltip: () => translations.Get("gmcm.style.colors.cursor.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Cursor,
+            tooltip: I18n.Gmcm_Style_Colors_Cursor_Tooltip,
             getColor: () => Styles.CursorColor,
             setColor: color => Styles.CursorColor = color);
         AddColorOption(
             FIELD_ID_TITLE_COLOR,
-            name: () => translations.Get("gmcm.style.colors.title"),
-            tooltip: () => translations.Get("gmcm.style.colors.title.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Title,
+            tooltip: I18n.Gmcm_Style_Colors_Title_Tooltip,
             getColor: () => Styles.SelectionTitleColor,
             setColor: color => Styles.SelectionTitleColor = color);
         AddColorOption(
             FIELD_ID_DESCRIPTION_COLOR,
-            name: () => translations.Get("gmcm.style.colors.description"),
-            tooltip: () => translations.Get("gmcm.style.colors.description.tooltip"),
+            name: I18n.Gmcm_Style_Colors_Description,
+            tooltip: I18n.Gmcm_Style_Colors_Description_Tooltip,
             getColor: () => Styles.SelectionDescriptionColor,
             setColor: color => Styles.SelectionDescriptionColor = color);
 
-        gmcm.AddSectionTitle(
-            mod,
-            text: () => translations.Get("gmcm.style.dimensions"));
-        gmcm.AddParagraph(
-            mod,
-            text: () => translations.Get("gmcm.style.dimensions.note"));
+        gmcm.AddSectionTitle(mod, I18n.Gmcm_Style_Dimensions);
+        gmcm.AddParagraph(mod, I18n.Gmcm_Style_Dimensions_Note);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.inner"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.inner.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Inner,
+            tooltip: I18n.Gmcm_Style_Dimensions_Inner_Tooltip,
             getValue: () => Styles.InnerRadius,
             setValue: value => Styles.InnerRadius = value,
             min: 200,
@@ -158,8 +150,8 @@ internal class StylePage(
             interval: 25);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.outer"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.outer.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Outer,
+            tooltip: I18n.Gmcm_Style_Dimensions_Outer_Tooltip,
             getValue: () => Styles.OuterRadius,
             setValue: value => Styles.OuterRadius = value,
             min: 100,
@@ -167,16 +159,16 @@ internal class StylePage(
             interval: 10);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.gap"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.gap.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Gap,
+            tooltip: I18n.Gmcm_Style_Dimensions_Gap_Tooltip,
             getValue: () => Styles.GapWidth,
             setValue: value => Styles.GapWidth = value,
             min: 0,
             max: 20);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.cursor.size"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.cursor.size.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Cursor_Size,
+            tooltip: I18n.Gmcm_Style_Dimensions_Cursor_Size_Tooltip,
             getValue: () => Styles.CursorSize,
             setValue: value => Styles.CursorSize = value,
             min: 16,
@@ -184,16 +176,16 @@ internal class StylePage(
             interval: 4);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.cursor.distance"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.cursor.distance.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Cursor_Distance,
+            tooltip: I18n.Gmcm_Style_Dimensions_Cursor_Distance_Tooltip,
             getValue: () => Styles.CursorDistance,
             setValue: value => Styles.CursorDistance = value,
             min: 0,
             max: 16);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.itemheight"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.itemheight.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Itemheight,
+            tooltip: I18n.Gmcm_Style_Dimensions_Itemheight_Tooltip,
             getValue: () => Styles.MenuSpriteHeight,
             setValue: value => Styles.MenuSpriteHeight = value,
             min: 16,
@@ -201,8 +193,8 @@ internal class StylePage(
             interval: 8);
         gmcm.AddNumberOption(
             mod,
-            name: () => translations.Get("gmcm.style.dimensions.selectionheight"),
-            tooltip: () => translations.Get("gmcm.style.dimensions.selectionheight.tooltip"),
+            name: I18n.Gmcm_Style_Dimensions_Selectionheight,
+            tooltip: I18n.Gmcm_Style_Dimensions_Selectionheight_Tooltip,
             getValue: () => Styles.SelectionSpriteHeight,
             setValue: value => Styles.SelectionSpriteHeight = value,
             min: 32,
