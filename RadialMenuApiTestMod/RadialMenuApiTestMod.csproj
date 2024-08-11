@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>RadialMenuApiTestMod</AssemblyName>
+        <RootNamespace>RadialMenuApiTestMod</RootNamespace>
+        <Version>0.1.0</Version>
+        <TargetFramework>net6.0</TargetFramework>
+        <LangVersion>Latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="assets\characters.png" />
+      <None Remove="assets\monsters.png" />
+      <None Remove="i18n\default.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="assets\characters.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="assets\monsters.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.1.1" />
+        <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.0.1">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ProjectExtensions><VisualStudio><UserProperties manifest_1json__JsonSchema="https://smapi.io/schemas/manifest.json" /></VisualStudio></ProjectExtensions>
+
+    <ItemGroup>
+	  <Using Include="StardewValley" />
+      <Using Include="StardewModdingAPI" />
+      <Using Alias="Object" Include="System.Object" />
+      <Using Alias="SObject" Include="StardewValley.Object" />
+	  <Using Alias="Rectangle" Include="Microsoft.Xna.Framework.Rectangle" />
+	  <Using Alias="Vector2" Include="Microsoft.Xna.Framework.Vector2" />
+  </ItemGroup>
+</Project>

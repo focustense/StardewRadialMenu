@@ -1,0 +1,2 @@
+Characters: https://opengameart.org/content/700-sprites
+Monsters: https://opengameart.org/content/roguelike-tiles-large-collection

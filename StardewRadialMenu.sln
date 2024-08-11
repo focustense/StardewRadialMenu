@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RadialMenu", "RadialMenu\RadialMenu.csproj", "{C1767637-7D5B-4498-B500-D98D21503C5C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RadialMenuApiTestMod", "RadialMenuApiTestMod\RadialMenuApiTestMod.csproj", "{2541A5B8-76AA-466E-AB99-8D68D9B2BCBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{C1767637-7D5B-4498-B500-D98D21503C5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1767637-7D5B-4498-B500-D98D21503C5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1767637-7D5B-4498-B500-D98D21503C5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2541A5B8-76AA-466E-AB99-8D68D9B2BCBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2541A5B8-76AA-466E-AB99-8D68D9B2BCBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2541A5B8-76AA-466E-AB99-8D68D9B2BCBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2541A5B8-76AA-466E-AB99-8D68D9B2BCBF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
