@@ -105,6 +105,12 @@ internal class ConfigMenu(
             "gmcm.controls.activation.delay.actions",
             getValue: () => Config.DelayedActions,
             setValue: value => Config.DelayedActions = value);
+        gmcm.AddBoolOption(
+            mod,
+            name: () => translations.Get("gmcm.controls.rememberselection"),
+            tooltip: () => translations.Get("gmcm.controls.rememberselection.tooltip"),
+            getValue: () => Config.RememberSelection,
+            setValue: value => Config.RememberSelection = value);
 
         gmcm.AddSectionTitle(
             mod,

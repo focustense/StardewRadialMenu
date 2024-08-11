@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using RadialMenu.Menus;
+using StardewModdingAPI;
 
 namespace RadialMenu.Config;
 
@@ -45,7 +46,7 @@ public class Configuration : ICursorConfiguration
     /// <summary>
     /// What action to perform when <see cref="PrimaryActivation"/> is used.
     /// </summary>
-    public ItemAction PrimaryAction { get; set; } = ItemAction.Use;
+    public MenuItemAction PrimaryAction { get; set; } = MenuItemAction.Use;
 
     /// <summary>
     /// How to perform the <see cref="PrimaryAction"/> on the selected item; refer to
@@ -57,7 +58,7 @@ public class Configuration : ICursorConfiguration
     /// <summary>
     /// What action to perform when the <see cref="SecondaryActionButton"/> is pressed.
     /// </summary>
-    public ItemAction SecondaryAction { get; set; } = ItemAction.Select;
+    public MenuItemAction SecondaryAction { get; set; } = MenuItemAction.Select;
 
     /// <summary>
     /// How to perform the <see cref="SecondaryAction"/> on the selected item.
@@ -74,6 +75,16 @@ public class Configuration : ICursorConfiguration
     /// Specifies which types of actions should receive the <see cref="ActivationDelayMs"/>.
     /// </summary>
     public DelayedActions DelayedActions { get; set; } = DelayedActions.ToolSwitch;
+
+    /// <summary>
+    /// Whether or not to remember the player's previous selection per menu.
+    /// </summary>
+    /// <remarks>
+    /// If enabled, closing and reopening a menu will cause it to reopen to the last open page,
+    /// instead of resetting to the default (current backpack page for inventory, first page for
+    /// custom menu).
+    /// </remarks>
+    public bool RememberSelection { get; set; } = false;
 
     /// <summary>
     /// Maximum number of items to display in the inventory radial menu.

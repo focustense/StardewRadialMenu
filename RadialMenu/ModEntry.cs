@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
 using RadialMenu.Gmcm;
+using RadialMenu.Menus;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -14,6 +15,8 @@ public class ModEntry : Mod
 {
     private const string GMCM_MOD_ID = "spacechase0.GenericModConfigMenu";
     private const string GMCM_OPTIONS_MOD_ID = "jltaylor-us.GMCMOptions";
+
+    private static readonly IReadOnlyList<IRadialMenuItem> EmptyItems = [];
 
     private readonly PerScreen<PlayerState> playerState;
     // Painter doesn't actually need to be per-screen in order to have correct output, but it does
@@ -38,13 +41,18 @@ public class ModEntry : Mod
         set => PlayerState.MenuOffset = value;
     }
 
-    internal IReadOnlyList<MenuItem> ActiveMenuItems
+    internal IRadialMenu? ActiveMenu
     {
-        get => PlayerState.ActiveMenuItems;
-        set => PlayerState.ActiveMenuItems = value;
+        get => PlayerState.ActiveMenu;
+        set => PlayerState.ActiveMenu = value;
     }
 
-    internal Func<DelayedActions?, ItemActivationResult>? PendingActivation
+    internal IRadialMenuPage? ActivePage
+    {
+        get => PlayerState.ActivePage;
+    }
+
+    internal Func<DelayedActions, MenuItemActivationResult>? PendingActivation
     {
         get => PlayerState.PendingActivation;
         set => PlayerState.PendingActivation = value;
@@ -71,7 +79,6 @@ public class ModEntry : Mod
     private IGMCMOptionsAPI? gmcmOptionsApi;
     private GenericModConfigKeybindings? gmcmKeybindings;
     private GenericModConfigSync? gmcmSync;
-    private MenuItemBuilder menuItemBuilder = null!;
     private TextureHelper textureHelper = null!;
     private KeybindActivator keybindActivator = null!;
 
@@ -85,10 +92,12 @@ public class ModEntry : Mod
     {
         config = Helper.ReadConfig<Configuration>();
         textureHelper = new(Helper.GameContent, Monitor);
-        menuItemBuilder = new(textureHelper, ActivateCustomMenuItem);
         keybindActivator = new(helper.Input);
 
         helper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
+        // Ensure menu gets updated at the right time.
+        helper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
+        helper.Events.Player.InventoryChanged += Player_InventoryChanged;
         // For optimal latency: handle input before the Update loop, perform actions/rendering after.
         helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
         helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
@@ -107,9 +116,7 @@ public class ModEntry : Mod
         Painter.Paint(
             e.SpriteBatch,
             Game1.uiViewport,
-            Cursor.ActiveMenu == MenuKind.Inventory && MenuOffset == 0
-                ? GetCurrentNonEmptyToolIndex()
-                : -1,
+            ActivePage?.SelectedItemIndex ?? -1,
             Cursor.CurrentTarget?.SelectedIndex ?? -1,
             Cursor.CurrentTarget?.Angle,
             selectionBlend);
@@ -122,6 +129,11 @@ public class ModEntry : Mod
         gmcmOptionsApi = Helper.ModRegistry.GetApi<IGMCMOptionsAPI>(GMCM_OPTIONS_MOD_ID);
         LoadGmcmKeybindings();
         RegisterConfigMenu();
+    }
+
+    private void GameLoop_SaveLoaded(object? sender, SaveLoadedEventArgs e)
+    {
+        playerState.ResetAllScreens();
     }
 
     private void GameLoop_UpdateTicked(object? sender, UpdateTickedEventArgs e)
@@ -153,8 +165,8 @@ public class ModEntry : Mod
                 RemainingActivationDelayMs -= Game1.currentGameTime.ElapsedGameTime.TotalMilliseconds;
             }
             var activationResult = MaybeInvokePendingActivation();
-            if (activationResult != ItemActivationResult.Ignored
-                && activationResult != ItemActivationResult.Delayed)
+            if (activationResult != MenuItemActivationResult.Ignored
+                && activationResult != MenuItemActivationResult.Delayed)
             {
                 PendingActivation = null;
                 RemainingActivationDelayMs = 0;
@@ -203,9 +215,10 @@ public class ModEntry : Mod
                         RestorePreMenuState();
                     }
                 }
-                UpdateMenuItems(Cursor.ActiveMenu);
+                PlayerState.SetActiveMenu(Cursor.ActiveMenu, config.RememberSelection);
             }
-            Cursor.UpdateCurrentTarget(ActiveMenuItems.Count);
+            Painter.Items = ActivePage?.Items ?? EmptyItems;
+            Cursor.UpdateCurrentTarget(ActivePage?.Items.Count ?? 0);
         }
 
         // Here be dragons: because the triggers are analog values and SMAPI uses a deadzone, it
@@ -251,24 +264,37 @@ public class ModEntry : Mod
             switch (button)
             {
                 case SButton.LeftShoulder:
-                    // We could also apply an offset equal to the Config.MaxInventoryItems value.
-                    // But that could land us in a weird situation where the menu gets permanently
-                    // out of sync with the toolbar, since the configured size does not have to be a
-                    // multiple of the true page size.
+                    // This implementation is generic for both menus, but was originally written
+                    // for inventory specifically, and the comments below are still valid:
                     //
-                    // Also note that the reason not to immediately apply an offset here (i.e. via
+                    // The reason not to immediately apply an offset here (i.e. via
                     // Farmer.shiftToolbar) is that if the player cancels out of the menu without
                     // selecting anything, or quick-activates a consumable item, we don't want to
                     // change the tool that's already equipped, which would happen automatically if
                     // using shiftToolbar.
-                    ApplyMenuOffset(-GameConstants.BACKPACK_PAGE_SIZE);
-                    UpdateMenuItems(Cursor.ActiveMenu);
+                    if (ActiveMenu?.PreviousPage() == true)
+                    {
+                        Game1.playSound("shwip");
+                    }
                     break;
                 case SButton.RightShoulder:
-                    ApplyMenuOffset(GameConstants.BACKPACK_PAGE_SIZE);
-                    UpdateMenuItems(Cursor.ActiveMenu);
+                    if (ActiveMenu?.NextPage() == true)
+                    {
+                        Game1.playSound("shwip");
+                    }
                     break;
             }
+        }
+    }
+
+    private void Player_InventoryChanged(object? sender, InventoryChangedEventArgs e)
+    {
+        // We don't need to invalidate the menu if the only change was a quantity, since that's only
+        // read at paint time. Any items added/removed, however, will change the layout/items in the
+        // menu.
+        if (e.Added.Any() || e.Removed.Any())
+        {
+            PlayerState.InvalidateInventory();
         }
     }
 
@@ -280,17 +306,9 @@ public class ModEntry : Mod
     private PlayerState CreatePlayerState()
     {
         var cursor = new Cursor(() => config);
-        return new(cursor);
-    }
-
-    private static int GetCurrentNonEmptyToolIndex()
-    {
-        return Game1.player.CurrentItem is not null
-            ? Game1.player.Items
-                .Take(Game1.player.CurrentToolIndex + 1)
-                .Where(item => item is not null)
-                .Count() - 1
-            : -1;
+        var inventoryMenu = new InventoryMenu(Game1.player, () => config.MaxInventoryItems);
+        var customMenu = new CustomMenu(() => config.CustomMenuItems, ActivateCustomMenuItem, textureHelper);
+        return new(cursor, inventoryMenu, customMenu);
     }
 
     private static GamePadState GetRawGamePadState()
@@ -300,13 +318,16 @@ public class ModEntry : Mod
             : new GamePadState();
     }
 
-    private Func<DelayedActions?, ItemActivationResult>? GetSelectedItemActivation(
-        ItemAction preferredAction)
+    private Func<DelayedActions, MenuItemActivationResult>? GetSelectedItemActivation(MenuItemAction preferredAction)
     {
+        if (ActivePage is null)
+        {
+            return null;
+        }
         var itemIndex = Cursor.CurrentTarget?.SelectedIndex;
-        return itemIndex < ActiveMenuItems.Count
-            ? (delayedActions) => ActiveMenuItems[itemIndex.Value]
-                .Activate(delayedActions, preferredAction)
+        return itemIndex < ActivePage.Items.Count
+            ? (delayedActions) => ActivePage.Items[itemIndex.Value]
+                .Activate(Game1.player, delayedActions, preferredAction)
             : null;
     }
 
@@ -330,7 +351,7 @@ public class ModEntry : Mod
         };
     }
 
-    private ItemActivationResult MaybeInvokePendingActivation()
+    private MenuItemActivationResult MaybeInvokePendingActivation()
     {
         if (PendingActivation is null)
         {
@@ -338,16 +359,16 @@ public class ModEntry : Mod
             // have already confirmed there's a pending activation.
             // Nonetheless, for safety we assign a special result type to this, just in case the
             // assumption gets broken later.
-            return ItemActivationResult.Ignored;
+            return MenuItemActivationResult.Ignored;
         }
         if (IsActivationDelayed && RemainingActivationDelayMs > 0)
         {
-            return ItemActivationResult.Delayed;
+            return MenuItemActivationResult.Delayed;
         }
         var result = RemainingActivationDelayMs <= 0
-            ? PendingActivation.Invoke(null)
+            ? PendingActivation.Invoke(DelayedActions.None)
             : PendingActivation.Invoke(config.DelayedActions);
-        if (result == ItemActivationResult.Delayed)
+        if (result == MenuItemActivationResult.Delayed)
         {
             Game1.playSound("select");
             IsActivationDelayed = true;
@@ -356,7 +377,7 @@ public class ModEntry : Mod
         // Farmer.shiftToolbar (on purpose), the selected index can now be on a non-active page.
         // To avoid confusing the game's UI, check for this condition and switch to the backpack
         // page that actually does contain the index.
-        if (result == ItemActivationResult.Selected
+        if (result == MenuItemActivationResult.Selected
             && Game1.player.CurrentToolIndex >= GameConstants.BACKPACK_PAGE_SIZE)
         {
             var items = Game1.player.Items;
@@ -446,6 +467,10 @@ public class ModEntry : Mod
     private void ResetConfiguration()
     {
         config = new();
+        foreach (var (_, state) in playerState.GetActiveValues())
+        {
+            state.InvalidateConfiguration();
+        }
     }
 
     private void RestorePreMenuState()
@@ -453,7 +478,7 @@ public class ModEntry : Mod
         Game1.freezeControls = PreMenuState.WasFrozen;
     }
 
-    private void ScheduleActivation(ItemAction preferredAction)
+    private void ScheduleActivation(MenuItemAction preferredAction)
     {
         IsActivationDelayed = false;
         PendingActivation = GetSelectedItemActivation(preferredAction);
@@ -473,47 +498,5 @@ public class ModEntry : Mod
             return;
         }
         keybindActivator.Activate(item.Keybind);
-    }
-
-    private void ApplyMenuOffset(int offset)
-    {
-        var previousOffset = MenuOffset;
-        var maxItems = Game1.player.Items.Count;
-        MenuOffset = (MenuOffset + offset + maxItems) % maxItems;
-        if (MenuOffset != previousOffset)
-        {
-            Game1.playSound("shwip");
-        }
-    }
-
-    private IEnumerable<(Item item, int index)> GetVisibleInventoryItems()
-    {
-        var items = Game1.player.Items;
-        var index = PlayerState.MenuOffset;
-        for (int i = 0; i < config.MaxInventoryItems; i++)
-        {
-            yield return (items[index], index);
-            if (++index >= items.Count)
-            {
-                index = 0;
-            }
-        }
-    }
-
-    private void UpdateMenuItems(MenuKind? menu)
-    {
-        ActiveMenuItems = menu switch
-        {
-            MenuKind.Inventory => GetVisibleInventoryItems()
-                .Select(x => x.item != null ? menuItemBuilder.GameItem(x.item, x.index) : null)
-                .Where(i => i is not null)
-                .Cast<MenuItem>()
-                .ToList(),
-            MenuKind.Custom => config.CustomMenuItems
-                .Select(item => menuItemBuilder.CustomItem(item))
-                .ToList(),
-            _ => [],
-        };
-        Painter.Items = ActiveMenuItems;
     }
 }

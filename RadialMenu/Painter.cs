@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RadialMenu.Config;
+using RadialMenu.Menus;
 using StardewValley;
 using TileRectangle = xTile.Dimensions.Rectangle;
 
@@ -20,7 +21,7 @@ internal class Painter
     private static readonly TextureSegment UnknownSprite =
         new(Game1.mouseCursors, /* Question Mark */ new(176, 425, 9, 12));
 
-    public IReadOnlyList<MenuItem> Items { get; set; } = [];
+    public IReadOnlyList<IRadialMenuItem> Items { get; set; } = [];
     public Styles Styles => getStyles();
 
     private readonly GraphicsDevice graphicsDevice;
@@ -409,7 +410,7 @@ internal class Painter
         return (int) Math.Ceiling(TWO_PI / optimalAngle);
     }
 
-    private static Point GetScaledSize(MenuItem item, int height)
+    private static Point GetScaledSize(IRadialMenuItem item, int height)
     {
         var sourceSize = GetSpriteSize(item, out _);
         var aspectRatio = (float)sourceSize.X / sourceSize.Y;
@@ -417,7 +418,7 @@ internal class Painter
         return new(width, height);
     }
 
-    private static Point GetSpriteSize(MenuItem item, out bool isMonogram)
+    private static Point GetSpriteSize(IRadialMenuItem item, out bool isMonogram)
     {
         if (item.Texture is null)
         {

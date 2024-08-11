@@ -12,18 +12,27 @@ public class CustomMenuItemConfiguration
     /// Short name for the item; displayed as the title when selected.
     /// </summary>
     public string Name { get; set; } = "";
+
     /// <summary>
     /// Item description, to display under the title when selected.
     /// </summary>
     public string Description { get; set; } = "";
+
     /// <summary>
     /// Key binding specifying the keys to simulate pressing when activated.
     /// </summary>
     public Keybind Keybind { get; set; } = new();
+
+    /// <summary>
+    /// Whether this action should use a confirmation blink/delay, even if not using <see cref="DelayedActions.All"/>.
+    /// </summary>
+    public bool EnableActivationDelay { get; set; } = false;
+
     /// <summary>
     /// Specifies the format of the <see cref="SpriteSourcePath"/>.
     /// </summary>
     public SpriteSourceFormat SpriteSourceFormat { get; set; }
+
     /// <summary>
     /// Path identifying which sprite to display for this item in the menu.
     /// </summary>
@@ -41,6 +50,7 @@ public class CustomMenuItemConfiguration
     /// </list>
     /// </remarks>
     public string SpriteSourcePath { get; set; } = "";
+
     /// <summary>
     /// Associates this item with a Generic Mod Config Menu key binding, which will cause it to
     /// automatically update the <see cref="Name"/>, <see cref="Description"/> and

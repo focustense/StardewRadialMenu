@@ -27,6 +27,7 @@ internal class CustomMenuPage(
     private const string FIELD_ID_NAME = $"{FIELD_ID_PREFIX}.ItemName";
     private const string FIELD_ID_DESCRIPTION = $"{FIELD_ID_PREFIX}.ItemDescription";
     private const string FIELD_ID_KEYBIND = $"{FIELD_ID_PREFIX}.Keybind";
+    private const string FIELD_ID_DELAY = $"{FIELD_ID_PREFIX}.Delay";
     // Fields related to the selected item image.
     private const string FIELD_ID_IMAGE_TYPE = $"{FIELD_ID_PREFIX}.ImageType";
     private const string FIELD_ID_IMAGE_ITEM_ID = $"{FIELD_ID_PREFIX}.ImageItemId";
@@ -152,6 +153,12 @@ internal class CustomMenuPage(
             getValue: () => new(itemList.SelectedItem.Keybind),
             setValue: value =>
                 itemList.SelectedItem.Keybind = value.Keybinds.FirstOrDefault() ?? new());
+        reg.AddBoolOption(
+            name: () => translations.Get("gmcm.custom.item.delay"),
+            tooltip: () => translations.Get("gmcm.custom.item.delay.tooltip"),
+            fieldId: FIELD_ID_DELAY,
+            getValue: () => itemList.SelectedItem.EnableActivationDelay,
+            setValue: value => itemList.SelectedItem.EnableActivationDelay = value);
         // The paragraph after keybind holds the note explaining what is (or is not) synced.
         // Since the text is dynamic, and doesn't necessarily show at all, there's no point in
         // trying to set up an initial value, as GMCM paragraphs are read-only and won't track an
@@ -316,6 +323,7 @@ internal class CustomMenuPage(
                             ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
                             ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
                         }
+                        ForceUpdateCheckbox(page, menu, FIELD_ID_DELAY);
                         ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
                     }
                     break;
@@ -458,6 +466,7 @@ internal class CustomMenuPage(
         page.ForceSaveOption(FIELD_ID_NAME);
         page.ForceSaveOption(FIELD_ID_DESCRIPTION);
         page.ForceSaveOption(FIELD_ID_KEYBIND);
+        page.ForceSaveOption(FIELD_ID_DELAY);
         page.ForceSaveOption(FIELD_ID_IMAGE_TYPE);
         // Asset path and source rect (for non-item-based images) are local state and synced from
         // the OnFieldChanged handler, so there's no need to save those explicitly.
@@ -485,6 +494,7 @@ internal class CustomMenuPage(
         ForceUpdateTextBox(page, menu, FIELD_ID_NAME);
         ForceUpdateTextBox(page, menu, FIELD_ID_DESCRIPTION);
         ForceUpdateKeybind(page, menu, FIELD_ID_KEYBIND);
+        ForceUpdateCheckbox(page, menu, FIELD_ID_DELAY);
         if (gmcmBindings is not null)
         {
             gmcmFilterModId = itemList.SelectedItem.Gmcm?.ModId ?? "";
