@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using RadialMenu.Config;
+using RadialMenu.Graphics;
 using RadialMenu.Menus;
 using StardewValley;
 using TileRectangle = xTile.Dimensions.Rectangle;

@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace RadialMenu;
+namespace RadialMenu.Graphics;
 
 public record TextureSegment(Texture2D Texture, Rectangle? SourceRect);
 

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using System.Globalization;
 
-namespace RadialMenu;
+namespace RadialMenu.Graphics;
 
 internal class Monogram
 {

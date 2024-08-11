@@ -6,6 +6,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI.Events;
+using RadialMenu.Graphics;
 
 namespace RadialMenu.Gmcm;
 

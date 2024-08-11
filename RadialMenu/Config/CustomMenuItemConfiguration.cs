@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI.Utilities;
+﻿using RadialMenu.Graphics;
+using StardewModdingAPI.Utilities;
 using System.Diagnostics.CodeAnalysis;
 
 namespace RadialMenu.Config;

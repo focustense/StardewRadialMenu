@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Input;
 using RadialMenu.Config;
 using RadialMenu.Gmcm;
+using RadialMenu.Graphics;
 using RadialMenu.Menus;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;

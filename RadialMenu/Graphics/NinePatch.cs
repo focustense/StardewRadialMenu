@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace RadialMenu;
+namespace RadialMenu.Graphics;
 
 // Also sometimes called "nine-slice". Scales certain textures without visible stretching.
 //

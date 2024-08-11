@@ -4,7 +4,7 @@ using RadialMenu.Config;
 using StardewModdingAPI;
 using StardewValley;
 
-namespace RadialMenu;
+namespace RadialMenu.Graphics;
 
 internal class TextureHelper(IGameContentHelper contentHelper, IMonitor monitor)
 {
@@ -40,7 +40,8 @@ internal class TextureHelper(IGameContentHelper contentHelper, IMonitor monitor)
                     {
                         monitor.Log(
                             $"Failed to load texture asset: {textureRect.AssetPath}\n" +
-                            $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}");
+                            $"{ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}",
+                            LogLevel.Error);
                     }
                 }
                 break;
