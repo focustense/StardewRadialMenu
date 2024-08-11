@@ -19,6 +19,7 @@ public class ModEntry : Mod
 
     private static readonly IReadOnlyList<IRadialMenuItem> EmptyItems = [];
 
+    private readonly PageRegistry pageRegistry = new();
     private readonly PerScreen<PlayerState> playerState;
     // Painter doesn't actually need to be per-screen in order to have correct output, but it does
     // some caching related to its current items/selection, so giving the same painter inputs from
@@ -74,6 +75,7 @@ public class ModEntry : Mod
     internal Painter Painter => painter.Value;
 
     // Global state
+    private Api api = null!;
     private Configuration config = null!;
     private ConfigMenu? configMenu;
     private IGenericModMenuConfigApi? configMenuApi;
@@ -92,6 +94,7 @@ public class ModEntry : Mod
     public override void Entry(IModHelper helper)
     {
         config = Helper.ReadConfig<Configuration>();
+        api = new(pageRegistry, Monitor);
         textureHelper = new(Helper.GameContent, Monitor);
         keybindActivator = new(helper.Input);
 
@@ -104,6 +107,11 @@ public class ModEntry : Mod
         helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
         helper.Events.Input.ButtonsChanged += Input_ButtonsChanged;
         helper.Events.Display.RenderedHud += Display_RenderedHud;
+    }
+
+    public override object? GetApi()
+    {
+        return api;
     }
 
     [EventPriority(EventPriority.Low)]
@@ -306,9 +314,12 @@ public class ModEntry : Mod
 
     private PlayerState CreatePlayerState()
     {
+        var who = Game1.player;
         var cursor = new Cursor(() => config);
-        var inventoryMenu = new InventoryMenu(Game1.player, () => config.MaxInventoryItems);
-        var customMenu = new CustomMenu(() => config.CustomMenuItems, ActivateCustomMenuItem, textureHelper);
+        var inventoryMenu = new InventoryMenu(who, () => config.MaxInventoryItems);
+        var registeredPages = pageRegistry.CreatePageList(who);
+        var customMenu = new CustomMenu(
+            () => config.CustomMenuItems, ActivateCustomMenuItem, textureHelper, registeredPages);
         return new(cursor, inventoryMenu, customMenu);
     }
 

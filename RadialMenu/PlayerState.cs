@@ -25,7 +25,7 @@ internal class PlayerState(Cursor cursor, InventoryMenu inventoryMenu, CustomMen
 
     public void InvalidateConfiguration()
     {
-        customMenu.RebuildShortcutPage();
+        customMenu.Invalidate();
         // We consider inventory to be invalidated as well because the page size may have changed.
         InvalidateInventory();
     }
