@@ -30,7 +30,7 @@ public interface IRadialMenuItem
     /// be used to indicate any "number of uses available". Any non-<c>null</c> value will render as digits at the
     /// bottom-right of the item icon/sprite in the menu.
     /// </remarks>
-    int? StackSize { get; }
+    int? StackSize => null;
 
     /// <summary>
     /// The item's quality, from 0 (base) to 3 (iridium).
@@ -38,7 +38,7 @@ public interface IRadialMenuItem
     /// <remarks>
     /// For non-<c>null</c> values, the corresponding star will be drawn to the bottom-left of the icon.
     /// </remarks>
-    int? Quality { get; }
+    int? Quality => null;
 
     /// <summary>
     /// The texture (sprite sheet) containing the item's icon to display in the menu.
@@ -46,7 +46,7 @@ public interface IRadialMenuItem
     /// <remarks>
     /// If not specified, the icon area will instead display monogram text based on the <see cref="Title"/>.
     /// </remarks>
-    Texture2D? Texture { get; }
+    Texture2D? Texture => null;
 
     /// <summary>
     /// The area within the <see cref="Texture"/> containing this specific item's icon/sprite that should be displayed
@@ -55,7 +55,7 @@ public interface IRadialMenuItem
     /// <remarks>
     /// If not specified, the entire <see cref="Texture"/> will be used.
     /// </remarks>
-    Rectangle? SourceRectangle { get; }
+    Rectangle? SourceRectangle => null;
 
     /// <summary>
     /// Optional separate area within the <see cref="Texture"/> providing an overlay sprite to render with
@@ -66,7 +66,7 @@ public interface IRadialMenuItem
     /// the tint can be applied to only specific regions. If this is set, then any <see cref="TintColor"/> will apply
     /// only to the overlay and <em>not</em> the base sprite contained in <see cref="SourceRectangle"/>.
     /// </remarks>
-    Rectangle? TintRectangle { get; }
+    Rectangle? TintRectangle => null;
 
     /// <summary>
     /// Tint color, if the item icon/sprite should be drawn in a specific color.
@@ -75,7 +75,7 @@ public interface IRadialMenuItem
     /// If <see cref="TintRectangle"/> is specified, this applies to the tintable region; otherwise, it applies directly
     /// to the base sprite in <see cref="SourceRectangle"/>.
     /// </remarks>
-    Color? TintColor { get; }
+    Color? TintColor => null;
 
     /// <summary>
     /// Attempts to activate the menu item, i.e. perform its associated action.
