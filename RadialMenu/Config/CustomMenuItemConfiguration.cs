@@ -73,6 +73,7 @@ public class CustomMenuItemConfiguration
             Name = Name,
             Description = Description,
             Keybind = Keybind,
+            EnableActivationDelay = EnableActivationDelay,
             SpriteSourceFormat = SpriteSourceFormat,
             SpriteSourcePath = SpriteSourcePath,
             Gmcm = Gmcm?.Clone(),
