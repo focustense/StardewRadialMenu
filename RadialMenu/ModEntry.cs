@@ -469,7 +469,6 @@ public class ModEntry : Mod
             gmcmKeybindings,
             gmcmSync,
             ModManifest,
-            Helper.Translation,
             Helper.ModContent,
             textureHelper,
             Helper.Events.GameLoop,

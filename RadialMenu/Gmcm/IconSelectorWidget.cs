@@ -5,7 +5,7 @@ using StardewValley;
 
 namespace RadialMenu.Gmcm;
 
-internal class IconSelectorWidget(ITranslationHelper translations)
+internal class IconSelectorWidget
 {
     public event EventHandler<EventArgs>? SelectedItemChanged;
 
@@ -59,7 +59,6 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         }
     }
 
-    private readonly ITranslationHelper translations = translations;
     private readonly SpritePreviewWidget preview = new();
     private readonly ClickDetector clickDetector = new(new ClickRepeat(250, 50));
 
@@ -187,7 +186,7 @@ internal class IconSelectorWidget(ITranslationHelper translations)
         // Category names don't seem to be in the API anywhere and maybe not even in the game at
         // all, so we store our own in the translations.
         var id = qualifier.TrimStart('(').TrimEnd(')');
-        return translations.Get($"itemcategory.{id}").Default(I18n.Itemcategory_Unknown(id));
+        return I18n.GetByKey($"itemcategory.{id}").Default(I18n.Itemcategory_Unknown(id));
     }
 
     private static string GetFirstItemForCategory(string categoryId)

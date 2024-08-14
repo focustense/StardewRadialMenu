@@ -15,7 +15,6 @@ internal class CustomMenuPage(
     GenericModConfigKeybindings? gmcmBindings,
     GenericModConfigSync? gmcmSync,
     IManifest mod,
-    ITranslationHelper translations,
     TextureHelper textureHelper,
     IGameLoopEvents gameLoopEvents,
     Func<Configuration> getConfig)
@@ -46,11 +45,10 @@ internal class CustomMenuPage(
     private readonly GenericModConfigSync? gmcmSync = gmcmSync;
     private readonly RegistrationHelper reg = new(gmcm, mod);
     private readonly IManifest mod = mod;
-    private readonly ITranslationHelper translations = translations;
     private readonly IGameLoopEvents gameLoopEvents = gameLoopEvents;
     private readonly Func<Configuration> getConfig = getConfig;
     private readonly CustomItemListWidget itemList = new(textureHelper);
-    private readonly IconSelectorWidget iconSelector = new(translations);
+    private readonly IconSelectorWidget iconSelector = new();
     private readonly SpritePreviewWidget customImagePreview = new();
 
     protected Configuration Config => getConfig();
@@ -172,7 +170,7 @@ internal class CustomMenuPage(
             setValue: value => itemList.SelectedItem.SpriteSourceFormat =
                 Enum.Parse<SpriteSourceFormat>(value),
             allowedValues: Enum.GetNames<SpriteSourceFormat>(),
-            formatAllowedValue: value => translations.Get($"gmcm.custom.item.image.type.{value}"));
+            formatAllowedValue: value => I18n.GetByKey($"gmcm.custom.item.image.type.{value}"));
         reg.AddTextOption(
             name: I18n.Gmcm_Custom_Item_Image_Item,
             tooltip: I18n.Gmcm_Custom_Item_Image_Item_Tooltip,

@@ -11,7 +11,6 @@ internal class StylePage(
     IGMCMOptionsAPI? gmcmOptions,
     IManifest mod,
     IModContentHelper modContent,
-    ITranslationHelper translations,
     Func<Styles> getStyles)
 {
     public const string ID = "MenuStyle";
@@ -36,7 +35,6 @@ internal class StylePage(
     private readonly IGMCMOptionsAPI? gmcmOptions = gmcmOptions;
     private readonly IManifest mod = mod;
     private readonly IModContentHelper modContent = modContent;
-    private readonly ITranslationHelper translations = translations;
     private readonly Func<Styles> getStyles = getStyles;
 
     // These assets are initialized in Setup(), so we assume they're not null once we need them.

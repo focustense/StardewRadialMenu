@@ -11,7 +11,6 @@ internal class ConfigMenu(
     GenericModConfigKeybindings? gmcmBindings,
     GenericModConfigSync? gmcmSync,
     IManifest mod,
-    ITranslationHelper translations,
     IModContentHelper modContent,
     TextureHelper textureHelper,
     IGameLoopEvents gameLoopEvents,
@@ -23,15 +22,13 @@ internal class ConfigMenu(
     private readonly IGenericModMenuConfigApi gmcm = gmcm;
     private readonly IGMCMOptionsAPI? gmcmOptions = gmcmOptions;
     private readonly IManifest mod = mod;
-    private readonly ITranslationHelper translations = translations;
     private readonly Func<Configuration> getConfig = getConfig;
 
     // Sub-pages
     private readonly CustomMenuPage customMenuPage = new(
-        gmcm, gmcmBindings, gmcmSync, mod, translations, textureHelper, gameLoopEvents,
-        getConfig);
+        gmcm, gmcmBindings, gmcmSync, mod, textureHelper, gameLoopEvents, getConfig);
     private readonly StylePage stylePage =
-        new(gmcm, gmcmOptions, mod, modContent, translations, () => getConfig().Styles);
+        new(gmcm, gmcmOptions, mod, modContent, () => getConfig().Styles);
 
     public void Setup()
     {
@@ -154,13 +151,13 @@ internal class ConfigMenu(
     {
         gmcm.AddTextOption(
             mod,
-            name: () => translations.Get(messageId),
-            tooltip: () => translations.Get($"{messageId}.tooltip"),
+            name: () => I18n.GetByKey(messageId),
+            tooltip: () => I18n.GetByKey($"{messageId}.tooltip"),
             getValue: () => getValue().ToString().ToLowerInvariant(),
             setValue: value => setValue(Enum.Parse<T>(value, true)),
             allowedValues: Enum.GetValues<T>()
                 .Select(e => e.ToString().ToLowerInvariant())
                 .ToArray(),
-            formatAllowedValue: value => translations.Get($"{choiceIdPrefix}.{value}"));
+            formatAllowedValue: value => I18n.GetByKey($"{choiceIdPrefix}.{value}"));
     }
 }
