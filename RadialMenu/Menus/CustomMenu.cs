@@ -44,7 +44,6 @@ internal class CustomMenu : IRadialMenu
     {
         combinedPages.Invalidate();
         combinedPages.ShortcutPage = CreateShortcutPage();
-
     }
 
     public void ResetSelectedPage()
