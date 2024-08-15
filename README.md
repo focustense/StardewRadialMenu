@@ -157,6 +157,7 @@ All of this mod's options are configurable through GMCM. If you prefer to edit t
 * `DelayedActions`: Lets you specify _which_ menu actions will receive the delay assigned to `ActivationDelayMs`. Only applicable if the delay is non-zero (obviously). This setting exists because most in-game actions (warp totems, horse whistle, etc.) will play some animation and thus *already* apply a delay, so any additional delay may not feel useful. The two settings are:
   * `All`: Apply the delay to all actions, period; anything you select from either menu will have the configured delay.
   * `ToolSwitch`: Only apply the delay to item _selection_ or "tool switches". If an item has a use-action associated with it, such as food/drinks, totems, staircases, etc., or shortcuts in the Custom menu, it will not receive the delay.
+* `RememberSelection`: Causes menus to remember the last page they were on after being closed. The default setting (`false`) resets the active page to whichever one has your current tool each time you reopen the menu.
 * `MaxInventoryItems`: Maximum number of items to show in the Inventory menu. The default is 12, which is intended for game balance, allowing you to access the same number of items as you would without the mod using normal L/R trigger cycling. You can set this to any positive number; however, values above 24 are likely to look bad (e.g. overlapping text) and may make it harder to "hit" any given menu item. Most players should keep this at 12.
 * `CustomMenuItems`: The shortcuts that appear in the Custom (default: right-trigger) menu. See the next section.
 * `Styles`: Controls the visual styles of the menu. If you don't like the default colors, or find that they clash with your game because you're using a mod to change the vanilla colors, then you can update these settings accordingly.
@@ -177,6 +178,8 @@ Each custom item in the `CustomMenuItems` list has its own properties defining h
 * `Description`: Optional. Small text displayed underneath the title (`Name`). See the "Item Description" text in the screenshot above.
 
 * `Keybind`: Controls what action will actually be performed by this shortcut. The custom menu works by simulating key presses, so any valid key-binding string like "B" or "Shift + F3" is valid here.
+
+* `EnableActivationDelay`: Whether or not to force an activation delay for this item, even if `DelayedActions` in the [Main Settings](#main-settings) is set to `ToolSwitch`. If a custom shortcut does _not_ interrupt play on its own (such as bringing up a menu or triggering an animation), then you can enable this to prevent unwanted directional inputs, similar to the default behavior when selecting a tool.
 
 * `SpriteSourceFormat`: The first field that determines the image or icon that will be displayed in the menu for this shortcut. Valid values are:
 
@@ -206,7 +209,53 @@ Each custom item in the `CustomMenuItems` list has its own properties defining h
 >
 > Uninstalling the mod referenced by a GMCM association, or having it go out of sync due to a new version of the other mod that changes its options, will _not_ cause your shortcut to disappear or stop working; it will simply stop updating its information to match the other mod's settings. If this happens, you can fix it by changing the `FieldName` to its (new) correct value.
 
-​    
+## API
+
+As of [v0.2.0](https://github.com/focustense/StardewRadialMenu/releases/tag/v0.2.0), Radial Menu has an [API](https://stardewvalleywiki.com/Modding:Modder_Guide/APIs/Integrations#Mod-provided_APIs) available for use by other mods, allowing them to add new pages to the custom (default: right trigger) menu. To use it:
+
+1. Copy the entire [IRadialMenuApi.cs](RadialMenuApiTestMod/IRadialMenuApi.cs) file into your project.
+2. Obtain an instance of the API via `IModRegistry.GetApi<IRadialMenuApi>()`.
+3. Add pages using `IRadialMenuApi.RegisterCustomMenuPage`.
+
+### Menu Pages
+
+Each menu (inventory and custom) is not simply a list of items, but a list of _pages_ each containing their own items. The interface for a page is `IRadialMenuPage`.
+
+The pages of the inventory menu are dynamic and synchronized to the player's inventory, typically with an individual page corresponding to the 12 items on a backpack/toolbar "page", assuming that the `MaxInventoryItems` [configuration setting](#main-settings) is left at its default value.
+
+The custom menu is the menu that is open for extension via the API. [User-configured shortcuts](#custom-item-shortcut-settings) populate the _first_ page only; any new pages added via the API can be reached using the left/right shoulder buttons while the menu is open.
+
+Both mod pages (`IRadialMenuPage`) and items (`IRadialMenuItem`) are treated as dynamic, meaning the drawing is not cached, and will immediately display any changes made to:
+
+- `IRadialMenuPage.Items`, if items are added, changed or removed;
+- `IRadialMenuPage.SelectedItemIndex`, always highlighting the most current selection;
+- `IRadialMenuItem.StackSize`, if there is a "stack" and anything is added to/removed from it;
+- `IRadialMenuItem.Texture` and `IRadialMenuItem.SourceRectangle`, for animated items as shown in the [example](RadialMenuApiTestMod/CharacterPage.cs).
+
+And so on.
+
+> [!NOTE]
+>
+> A page's `SelectedItemIndex` has a similar meaning as `Farmer.CurrentItem`, referring to some notion of _in-game_ selection as opposed to the "cursor selection" in the menu itself. For example, if your mod added a page to switch hats, the selection would be whichever hat the player is wearing.
+
+### Menu Items
+
+The `IRadialMenuItem` interface is mostly what anyone familiar with regular [Items](https://stardewvalleywiki.com/Modding:Items), but simplified and abstracted to only the data necessary to display menu items, which means no IDs, context tags, categories, or other fields that don't affect the item's "look".
+
+Activation is handled by the `Activate` method. You, the mod author, decide everything about what this means. If it affects the player in any way, then it is highly recommended to use the `Farmer who` parameter instead of relying on `Game1.player`.
+
+One of the less-obvious features is the `DelayedActions` argument and how menu delays work. The reason why menu items do not simply have a "ShouldDelay" field is an artifact of how the in-game `Item` works: specifically, there is no general solution for predicting what an item _will do_ when used; staircases, the horse flute, and even food items may be "blocked" depending on the circumstances, resulting in the quick-action failing and falling back to standard item/tool selection instead - and this fallback should trigger the menu blink and activation delay.
+
+Thus the API, both internally and externally, works as follows:
+
+- `Activate` is invoked at least once (possibly many times) with a `DelayedActions` value that is something other than `None`, which indicates to the callee that the player _wants a delay_ under certain circumstances and that the delay has not already expired.
+- If the menu item sees this and _should delay_ - that is, if it considers the result of its activation to be a "match" for the `delayedActions` argument - then it short-circuits any further action and returns `MenuItemActivationResult.Delayed`.
+  - For regular in-game items, the actual meaning of this is something like _"I tried to `performUseAction()` but failed, so I'm going to treat this as a tool-selection instead, and you've asked me to delay tool selections."_
+  - If, as is likely, your mod actually knows what the result will be ahead of time - or does not have a "use" action at all, only "select" - then the implementation is _much_ simpler. Refer to the examples in [CharacterMenuItem](https://github.com/focustense/StardewRadialMenu/blob/e9575bd1a21004fa383ecf32be18cdb23019f736/RadialMenuApiTestMod/CharacterPage.cs#L61) and [MonsterMenuItem](https://github.com/focustense/StardewRadialMenu/blob/e9575bd1a21004fa383ecf32be18cdb23019f736/RadialMenuApiTestMod/MonsterPage.cs#L58) for illustration.
+- Finally, **if** the item confirmed a delay by returning the `Delayed` result, then when Radial Menu itself has finished waiting for that delay, it will invoke `Activate` one final time with `DelayedActions.None`, indicating that delaying is no longer requested/permitted.
+  - In other words, if any `IRadialMenuItem` ever sees `DelayedActions.None`, then it should _always_ perform the requested action immediately and _never_ return `MenuItemActivationResult.Delayed`.
+
+Aside from `Delayed`, there are not major differences between the different `MenuItemActivationResult` values. Internally, `Selected` is used as a signal that the player's current tool may no longer be in the first backpack row or visible in the toolbar, and to shuffle the inventory when this is the case, similar to what `Farmer.shiftToolbar` does. This particular edge case probably doesn't apply to most mods, but for future compatibility, it is a good idea to try to return the value that most closely matches what actually happened.
 
 ## Limitations/Known Issues
 

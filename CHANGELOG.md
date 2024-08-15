@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Public API for use by other mods, with demo project; see [documentation in the readme](README.md#api).
+- Option to remember the last-opened menu page.
+- Per-item setting to force activation delay on custom menu items.
+
+### Changed
+
+- Menu pages are persistent and synced on specific triggers, such as `InventoryChanged`, instead of being recreated every time the menu is opened; this change supports the new API.
+- Switch from `TranslationHelper` to `ModTranslationClassBuilder`; should have no user-facing effects.
+
+### Fixed
+
+- Items that are picked up while a menu is already open (i.e. pulled in by "magnetism") will show up in the inventory menu immediately, without having to close/reopen the menu.
+- Minor fixes to error logging.
+
 ## [0.1.6] - 2024-06-23
 
 ### Added
