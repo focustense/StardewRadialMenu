@@ -228,17 +228,20 @@ internal class Painter
 
         var centerX = viewport.Width / 2.0f;
         var centerY = viewport.Height / 2.0f;
-        var itemDrawSize = GetScaledSize(item, Styles.SelectionSpriteHeight);
-        var itemPos =
-            new Vector2(centerX - itemDrawSize.X / 2, centerY - itemDrawSize.Y - 24);
-        var itemRect = new Rectangle(itemPos.ToPoint(), itemDrawSize);
-        var baseColor = item.TintRectangle is null
-                    ? (item.TintColor ?? Color.White)
-                    : Color.White;
-        spriteBatch.Draw(item.Texture, itemRect, item.SourceRectangle, baseColor);
-        if (item.TintRectangle is Rectangle tintRect && item.TintColor is Color tintColor)
+        if (item.Texture is not null)
         {
-            spriteBatch.Draw(item.Texture, itemRect, tintRect, tintColor);
+            var itemDrawSize = GetScaledSize(item, Styles.SelectionSpriteHeight);
+            var itemPos =
+                new Vector2(centerX - itemDrawSize.X / 2, centerY - itemDrawSize.Y - 24);
+            var itemRect = new Rectangle(itemPos.ToPoint(), itemDrawSize);
+            var baseColor = item.TintRectangle is null
+                        ? (item.TintColor ?? Color.White)
+                        : Color.White;
+            spriteBatch.Draw(item.Texture, itemRect, item.SourceRectangle, baseColor);
+            if (item.TintRectangle is Rectangle tintRect && item.TintColor is Color tintColor)
+            {
+                spriteBatch.Draw(item.Texture, itemRect, tintRect, tintColor);
+            }
         }
 
         var labelFont = Game1.dialogueFont;
