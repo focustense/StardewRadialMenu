@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Inventory radial menu now stays in sync with actual inventory when an item from the second (or later) row is moved up to the first row and becomes the selected tool.
+- Custom menu no longer fails to render when focused on an item without a valid texture (i.e. provided by an API user).
+
 ## [0.2.0] - 2024-08-15
 
 ### Added
