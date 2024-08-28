@@ -34,6 +34,7 @@ internal class InventoryMenu(Farmer who, Func<int> getPageSize) : IRadialMenu
 
     public void ResetSelectedPage()
     {
+        RefreshIfDirty();
         // In case there's any inconsistency between the menu and the player's inventory, we'll first try to match on
         // the item itself. However, there might be no current item if the player just consumed the last of a stack, or
         // put it into a chest, etc., so if this happens, default to the first item on the current "page", which is
