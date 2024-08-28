@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-08-28
+
 ### Fixed
 
 - Inventory radial menu now stays in sync with actual inventory when an item from the second (or later) row is moved up to the first row and becomes the selected tool.
@@ -86,7 +88,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Custom shortcuts menu via right trigger (default).
 - [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) pages for control scheme, appearance and custom shortcuts.
 
-[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.4...v0.1.5
