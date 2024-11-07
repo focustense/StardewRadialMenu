@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.2] - 2024-11-06
+
+### Fixed
+
+- No code changes, but rebuilt binary with Stardew Valley 1.6.10 DLL to eliminate `InvalidProgramException` after update.
+
 ## [0.2.1] - 2024-08-28
 
 ### Fixed
@@ -88,7 +94,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Custom shortcuts menu via right trigger (default).
 - [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098) pages for control scheme, appearance and custom shortcuts.
 
-[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/focustense/StardewRadialMenu/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/focustense/StardewRadialMenu/compare/v0.1.5...v0.1.6
