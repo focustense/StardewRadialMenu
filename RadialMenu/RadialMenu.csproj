@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>RadialMenu</AssemblyName>
     <RootNamespace>RadialMenu</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>Latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>

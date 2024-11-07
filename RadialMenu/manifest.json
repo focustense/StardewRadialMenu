@@ -1,7 +1,7 @@
 {
   "Name": "Radial Menu",
   "Author": "focustense",
-  "Version": "0.2.1",
+  "Version": "0.2.2",
   "Description": "Radial menu for streamlined controller play",
   "UniqueID": "focustense.RadialMenu",
   "EntryDll": "RadialMenu.dll",
@@ -11,6 +11,6 @@
       "IsRequired": true
     }
   ],
-  "MinimumApiVersion": "4.0.5",
+  "MinimumApiVersion": "4.1.3",
   "UpdateKeys": [ "Nexus:25257", "GitHub:focustense/StardewRadialMenu" ]
 }
