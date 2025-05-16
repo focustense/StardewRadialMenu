@@ -31,7 +31,7 @@ Using Star Control requires:
 
 To get started:
 
-1. Install [SMAPI](https://smapio.io) and set up your game for mods, per the [Modding: Player's Guide](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started) instructions.
+1. Install [SMAPI](https://smapi.io) and set up your game for mods, per the [Modding: Player's Guide](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started) instructions.
 2. Download and install [Stardew UI](https://github.com/focustense/StardewUI/releases).
 3. Download the latest release from [Nexus Mods](https://www.nexusmods.com/stardewvalley/mods/25257) or [GitHub](https://github.com/focustense/StardewControllers/releases).
 4. Open the .zip file and extract the `StarControl` folder into your `Stardew Valley\Mods` folder, or use a mod manager such as Stardrop.
